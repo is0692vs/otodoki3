@@ -44,6 +44,9 @@
   },
   "remoteEnv": {
     "GEMINI_API_KEY": "${localEnv:GEMINI_API_KEY}",
+    "SUPABASE_ACCESS_TOKEN": "${localEnv:SUPABASE_ACCESS_TOKEN}",
+    "GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}",
+    "NOTION_API_KEY": "${localEnv:NOTION_API_KEY}",
     "PATH": "${containerEnv:PATH}:/home/node/.local/bin"
   },
   "remoteUser": "node"
