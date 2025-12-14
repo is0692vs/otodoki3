@@ -1,18 +1,69 @@
 {
-  "name": "otodoki3 TypeScript Node",
+  "name": "otodoki3 Dev Environment",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
   "features": {
-    "ghcr.io/supabase/containers/features/supabase-cli:latest": {},
-    "ghcr.io/github/gh-cli/gh-cli/gh-cli:latest": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "enableNonRootDocker": true,
+      "moby": false
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "postCreateCommand": "npm install",
+  "forwardPorts": [3000, 8000],
   "customizations": {
     "vscode": {
       "extensions": [
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "bradlc.vscode-tailwindcss"
-      ]
+        "bradlc.vscode-tailwindcss",
+        "ms-python.python",
+        "ms-python.pylint",
+        "ms-vscode.vscode-json",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "GitHub.vscode-pull-request-github",
+        "ms-python.vscode-python-envs",
+        "ms-python.debugpy",
+        "ms-python.vscode-pylance",
+        "GitHub.codespaces",
+        "GitHub.remotehub",
+        "ms-vscode.remote-server",
+        "ms-vscode-remote.vscode-remote-extensionpack",
+        "saoudrizwan.claude-dev",
+        "openai.chatgpt",
+        "google.gemini-cli-vscode-ide-companion",
+        "google.geminicodeassist",
+        "mhutchie.git-graph",
+        "donjayamanne.githistory",
+        "github.vscode-github-actions",
+        "eamodio.gitlens",
+        "kilocode.kilo-code",
+        "yzhang.markdown-all-in-one",
+        "donjayamanne.python-extension-pack",
+        "cweijan.vscode-mysql-client2",
+        "ritwickdey.LiveServer",
+        "ms-vscode.vscode-websearchforcopilot",
+        "Supabase.vscode-supabase-extension",
+        "ms-playwright.playwright",
+        "HirokiMukai.jules-extension"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "editor.formatOnSave": true,
+        "files.autoSave": "afterDelay"
+      }
     }
-  }
+  },
+  "remoteEnv": {
+    "GEMINI_API_KEY": "${localEnv:GEMINI_API_KEY}",
+    "PATH": "${containerEnv:PATH}:/home/node/.local/bin"
+  },
+  "remoteUser": "node"
 }
