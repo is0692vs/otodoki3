@@ -2,28 +2,32 @@
   "[github.copilot.chat].mcpServers": {
     "supabase": {
       "command": "npx",
-      "args": ["-y", "@supabase/mcp-server-supabase"],
+      "args": ["-y", "@supabase/mcp-server-supabase@0.5.9"],
       "env": {
-        "SUPABASE_ACCESS_TOKEN": "${env:SUPABASE_ACCESS_TOKEN}"
+        "SUPABASE_ACCESS_TOKEN": "${env:SUPABASE_ACCESS_TOKEN}",
+        "SUPABASE_PROJECT_REF": "${env:SUPABASE_PROJECT_REF}",
+        "SUPABASE_DB_PASSWORD": "${env:SUPABASE_DB_PASSWORD}",
+        "SUPABASE_REGION": "${env:SUPABASE_REGION}",
+        "QUERY_API_KEY": "${env:QUERY_API_KEY}"
       }
     },
     "github": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "args": ["-y", "@modelcontextprotocol/server-github@2025.4.8"],
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_PERSONAL_ACCESS_TOKEN}"
       }
     },
     "notion": {
       "command": "npx",
-      "args": ["-y", "@v-3/mcp-notion"],
+      "args": ["-y", "@v-3/mcp-notion@latest"],
       "env": {
         "NOTION_API_KEY": "${env:NOTION_API_KEY}"
       }
     },
     "playwright": {
       "command": "npx",
-      "args": ["-y", "@playwright/mcp"]
+      "args": ["-y", "@playwright/mcp@0.0.52"]
     }
   }
 }

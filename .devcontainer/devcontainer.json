@@ -44,9 +44,13 @@
   },
   "remoteEnv": {
     "GEMINI_API_KEY": "${localEnv:GEMINI_API_KEY}",
-    "SUPABASE_ACCESS_TOKEN": "${localEnv:SUPABASE_ACCESS_TOKEN}",
-    "GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}",
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "${localEnv:GITHUB_PERSONAL_ACCESS_TOKEN}",
     "NOTION_API_KEY": "${localEnv:NOTION_API_KEY}",
+    "QUERY_API_KEY": "${localEnv:QUERY_API_KEY}",
+    "SUPABASE_ACCESS_TOKEN": "${localEnv:SUPABASE_ACCESS_TOKEN}",
+    "SUPABASE_DB_PASSWORD": "${localEnv:SUPABASE_DB_PASSWORD}",
+    "SUPABASE_PROJECT_REF": "${localEnv:SUPABASE_PROJECT_REF}",
+    "SUPABASE_REGION": "${localEnv:SUPABASE_REGION}",
     "PATH": "${containerEnv:PATH}:/home/node/.local/bin"
   },
   "remoteUser": "node"
