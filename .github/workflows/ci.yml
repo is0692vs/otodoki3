@@ -28,7 +28,6 @@ jobs:
       - name: Run linter
         run: npm run lint
 
-
       - name: Run coverage
         run: npm run test:coverage
         env:
