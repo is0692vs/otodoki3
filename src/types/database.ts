@@ -285,7 +285,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      trim_track_pool: {
+        Args: {
+          max_size: number
+        }
+        Returns: {
+          deleted_count: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
