@@ -34,7 +34,8 @@
         "ms-vscode.vscode-websearchforcopilot",
         "Supabase.vscode-supabase-extension",
         "ms-playwright.playwright",
-        "HirokiMukai.jules-extension"
+        "HirokiMukai.jules-extension",
+        "coderabbit.coderabbit-vscode"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
