@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { Database } from '@/types/database';
+import type { Database, Json } from '@/types/database';
 import type { Track } from '@/types/track-pool';
 
 /**
@@ -11,13 +11,13 @@ export function validateMetadata(metadata: unknown): Database['public']['Tables'
     if (typeof metadata === 'string') {
         try {
             const parsed = JSON.parse(metadata);
-            return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) ? (parsed as any) : null;
-        } catch (_) {
+            return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) ? (parsed as Json) : null;
+        } catch {
             return null;
         }
     }
     if (typeof metadata === 'object' && !Array.isArray(metadata)) {
-        return metadata as any;
+        return metadata as Json;
     }
     return null;
 }
@@ -162,9 +162,15 @@ export async function trimPool(maxSize: number): Promise<void> {
         }
 
         // data は [{ deleted_count: <number> }] のような形で返ることを想定
-        const deletedCount = Array.isArray(data) && data.length > 0 && (data[0] as any).deleted_count != null
-            ? Number((data[0] as any).deleted_count)
-            : 0;
+        let deletedCount = 0;
+        if (Array.isArray(data) && data.length > 0) {
+            const candidate = data[0] as { deleted_count?: number | string | null };
+            if (typeof candidate.deleted_count === 'number') {
+                deletedCount = candidate.deleted_count;
+            } else if (candidate.deleted_count != null) {
+                deletedCount = Number(candidate.deleted_count);
+            }
+        }
 
         if (deletedCount > 0) {
             console.log(`Successfully removed ${deletedCount} old tracks from pool via RPC.`);

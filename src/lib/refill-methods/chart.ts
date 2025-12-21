@@ -89,7 +89,7 @@ export async function fetchTracksFromChart(
         return tracks;
     } catch (error) {
         // abortされた場合は特有の処理
-        if (error instanceof Error && (error.name === 'AbortError' || (error as any).code === 'ABORT_ERR')) {
+        if (error instanceof Error && (error.name === 'AbortError' || (error as { code?: string }).code === 'ABORT_ERR')) {
             console.error('Apple RSS Charts API request aborted due to timeout.');
             throw new Error('Request to Apple RSS Charts API timed out.');
         }

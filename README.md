@@ -34,3 +34,40 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## テスト
+
+このプロジェクトは Jest を使用してテストを実行します。
+
+### テスト実行方法
+
+```bash
+# すべてのテストを実行
+npm test
+
+# カバレッジ付きで実行
+npm run test:coverage
+
+# ウォッチモードで実行
+npm run test:watch
+```
+
+### 環境変数の設定
+
+テストを実行するには、以下の環境変数が必要です：
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
+TRACK_POOL_MAX_SIZE=10
+```
+
+詳細は [src/lib/__tests__/README.md](src/lib/__tests__/README.md) を参照してください。
+
+### テストカバレッジ目標
+
+- 全体: 80% 以上
+- 重要な関数: 100%
+
+現在のカバレッジ:
+- `src/lib/refill-methods/chart.ts`: 93.47% (statements), 95.34% (lines)
