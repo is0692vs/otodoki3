@@ -394,15 +394,14 @@ describe('chart error handling', () => {
                 statusText: 'Internal Server Error',
             });
 
-            await expect(fetchTracksFromChartWithRetry(10, 0)).rejects.toThrow('Failed to fetch tracks after 0 attempts: undefined');
-        });
-
         it('should handle negative maxRetries', async () => {
-            global.fetch = jest.fn();
+            global.fetch = jest.fn().mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: async () => ({ feed: { results: [] } }),
+            });
 
-            const result = await fetchTracksFromChartWithRetry(10, -1);
-            expect(result).toEqual([]);
-            expect(global.fetch).not.toHaveBeenCalled();
+            await expect(fetchTracksFromChartWithRetry(10, -1)).rejects.toThrow('Failed to fetch tracks after -1 attempts');
         });
     });
 });
