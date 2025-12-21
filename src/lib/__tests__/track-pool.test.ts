@@ -1,5 +1,4 @@
 import { validateMetadata, getTracksFromPool, addTracksToPool, getPoolSize } from '../track-pool';
-import { supabase } from '../supabase';
 import { cleanupTestData } from '@/tests/setup';
 import type { Track } from '@/types/track-pool';
 
@@ -40,12 +39,21 @@ describe('validateMetadata', () => {
 
 describe('track-pool', () => {
     const testTrackIds: string[] = [];
+    const hasSupabaseCredentials = process.env.NEXT_PUBLIC_SUPABASE_URL && 
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+        process.env.NEXT_PUBLIC_SUPABASE_URL !== 'http://localhost:54321' &&
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'test-key';
+
+    // Skip integration tests if Supabase credentials are not available
+    const describeIfSupabase = hasSupabaseCredentials ? describe : describe.skip;
 
     afterEach(async () => {
-        await cleanupTestData(testTrackIds);
+        if (hasSupabaseCredentials) {
+            await cleanupTestData(testTrackIds);
+        }
     });
 
-    describe('addTracksToPool', () => {
+    describeIfSupabase('addTracksToPool', () => {
         it('プールに楽曲を追加できる', async () => {
             const tracks: Track[] = [{
                 track_id: '999000001',
@@ -86,7 +94,7 @@ describe('track-pool', () => {
         });
     });
 
-    describe('getTracksFromPool', () => {
+    describeIfSupabase('getTracksFromPool', () => {
         it('指定数の楽曲を取得できる', async () => {
             const tracks: Track[] = Array.from({ length: 5 }, (_, i) => ({
                 track_id: `999${String(i + 100).padStart(6, '0')}`,
@@ -98,16 +106,16 @@ describe('track-pool', () => {
 
             await addTracksToPool(tracks, { method: 'chart', weight: 1 });
             const result = await getTracksFromPool(3);
-            expect(result.length).toBeLessThanOrEqual(3);
+            expect(result.length).toBe(3);
         });
 
         it('プールが空の場合は空配列を返す', async () => {
             const result = await getTracksFromPool(10);
-            expect(Array.isArray(result)).toBe(true);
+            expect(result).toEqual([]);
         });
     });
 
-    describe('getPoolSize', () => {
+    describeIfSupabase('getPoolSize', () => {
         it('プールサイズを取得できる', async () => {
             const size = await getPoolSize();
             expect(typeof size).toBe('number');

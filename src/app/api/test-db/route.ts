@@ -4,26 +4,21 @@ import { NextResponse } from 'next/server'
 
 export async function GET() {
     try {
-        // RPC経由で現在時刻を取得（テーブル不要）
-        const { data, error } = await supabase.rpc('now').maybeSingle()
+        // 接続確認のため、track_pool テーブルから1件取得を試みる
+        const { error } = await supabase
+            .from('track_pool')
+            .select('track_id')
+            .limit(1)
+            .maybeSingle()
 
         if (error) {
             console.error('Supabase error:', error)
-            // rpcが無くてもエラーコードで接続確認
-            if (error.code === 'PGRST202') {
-                // function not found = 接続自体はOK
-                return NextResponse.json({
-                    status: 'connected',
-                    message: 'Supabase connection OK (no RPC defined)',
-                })
-            }
             throw error
         }
 
         return NextResponse.json({
             status: 'connected',
             message: 'Supabase connection successful',
-            serverTime: data,
         })
     } catch (err) {
         console.error('Catch error:', err)
