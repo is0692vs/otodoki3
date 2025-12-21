@@ -7,6 +7,7 @@ import {
 } from '../track-pool';
 import { supabase } from '../supabase';
 import { mockTracks } from '../__fixtures__/tracks';
+import type { Track } from '@/types/track-pool';
 
 // テスト後のクリーンアップ用ヘルパー
 async function cleanupTestTracks() {
@@ -129,8 +130,8 @@ describeIf(hasSupabase)('track-pool integration tests', () => {
             const trackWithInvalidMetadata = {
                 ...mockTracks[0],
                 track_id: '9999',
-                metadata: ['invalid', 'array'] as any,
-            };
+                metadata: ['invalid', 'array'] as unknown,
+            } as unknown as Track;
             
             // 配列メタデータは null に変換されるべき
             await expect(
@@ -247,7 +248,7 @@ describeIf(hasSupabase)('track-pool error handling', () => {
             const invalidTrack = {
                 track_id: '8888',
                 // track_name, artist_name, preview_url が欠けている
-            } as any;
+            } as unknown as Track;
             
             await expect(
                 addTracksToPool([invalidTrack])

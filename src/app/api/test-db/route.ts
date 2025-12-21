@@ -7,7 +7,7 @@ export async function GET() {
         // RPC経由で現在時刻を取得（テーブル不要）
         // Supabase の型定義は登録済みの RPC 名（例: 'trim_track_pool'）に限定しているため、
         // テスト用に存在しない汎用的な 'now' を呼ぶために型を一旦無効化します。
-        const { data, error } = await supabase.rpc('now' as unknown as any).maybeSingle()
+        const { data, error } = await supabase.rpc('now' as unknown as never).maybeSingle()
 
         if (error) {
             console.error('Supabase error:', error)
