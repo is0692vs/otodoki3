@@ -10,18 +10,15 @@ import { mockTracks } from '../__fixtures__/tracks';
 
 // テスト後のクリーンアップ用ヘルパー
 async function cleanupTestTracks() {
-    try {
-        // test_data: true のメタデータを持つトラックを削除
-        const { error } = await supabase
-            .from('track_pool')
-            .delete()
-            .or('track_id.in.(1001,1002,1003),metadata->>test_data.eq.true');
-        
-        if (error) {
-            console.error('Cleanup error:', error);
-        }
-    } catch (error) {
-        console.error('Error during cleanup:', error);
+    // test_data: true のメタデータを持つトラックを削除
+    const { error } = await supabase
+        .from('track_pool')
+        .delete()
+        .or('track_id.in.(1001,1002,1003),metadata->>test_data.eq.true');
+    
+    if (error) {
+        // エラーがあればテストを失敗させる
+        throw new Error(`Cleanup failed: ${error.message}`);
     }
 }
 

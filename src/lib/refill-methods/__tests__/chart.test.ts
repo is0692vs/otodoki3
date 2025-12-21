@@ -5,13 +5,14 @@ import {
     mockAppleRssResponseWithoutPreview,
 } from '../../__fixtures__/tracks';
 
-// グローバル fetch のモック
-global.fetch = jest.fn();
-
 describe('fetchTracksFromChart', () => {
+    let fetchMock: jest.SpyInstance;
+
     beforeEach(() => {
         jest.clearAllMocks();
         jest.clearAllTimers();
+        // Mock fetch using jest.spyOn for better test isolation
+        fetchMock = jest.spyOn(global, 'fetch').mockImplementation();
     });
 
     afterEach(() => {
@@ -20,7 +21,7 @@ describe('fetchTracksFromChart', () => {
 
     describe('正常系', () => {
         it('should fetch tracks from Apple RSS API', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: true,
                 status: 200,
                 json: async () => mockAppleRssResponse,
@@ -43,7 +44,7 @@ describe('fetchTracksFromChart', () => {
         });
 
         it('should use default limit of 50', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: true,
                 status: 200,
                 json: async () => mockAppleRssResponse,
@@ -51,14 +52,14 @@ describe('fetchTracksFromChart', () => {
 
             await fetchTracksFromChart();
 
-            expect(global.fetch).toHaveBeenCalledWith(
+            expect(fetchMock).toHaveBeenCalledWith(
                 'https://rss.applemarketingtools.com/api/v2/jp/music/most-played/50/songs',
                 expect.any(Object)
             );
         });
 
         it('should respect custom limit parameter', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: true,
                 status: 200,
                 json: async () => mockAppleRssResponse,
@@ -66,14 +67,14 @@ describe('fetchTracksFromChart', () => {
 
             await fetchTracksFromChart(10);
 
-            expect(global.fetch).toHaveBeenCalledWith(
+            expect(fetchMock).toHaveBeenCalledWith(
                 'https://rss.applemarketingtools.com/api/v2/jp/music/most-played/10/songs',
                 expect.any(Object)
             );
         });
 
         it('should use custom User-Agent if provided', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: true,
                 status: 200,
                 json: async () => mockAppleRssResponse,
@@ -81,7 +82,7 @@ describe('fetchTracksFromChart', () => {
 
             await fetchTracksFromChart(10, { userAgent: 'CustomAgent/1.0' });
 
-            expect(global.fetch).toHaveBeenCalledWith(
+            expect(fetchMock).toHaveBeenCalledWith(
                 expect.any(String),
                 expect.objectContaining({
                     headers: { 'User-Agent': 'CustomAgent/1.0' },
@@ -90,7 +91,7 @@ describe('fetchTracksFromChart', () => {
         });
 
         it('should use default User-Agent if not provided', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: true,
                 status: 200,
                 json: async () => mockAppleRssResponse,
@@ -98,7 +99,7 @@ describe('fetchTracksFromChart', () => {
 
             await fetchTracksFromChart(10);
 
-            expect(global.fetch).toHaveBeenCalledWith(
+            expect(fetchMock).toHaveBeenCalledWith(
                 expect.any(String),
                 expect.objectContaining({
                     headers: { 'User-Agent': 'otodoki/1.0' },
@@ -109,7 +110,7 @@ describe('fetchTracksFromChart', () => {
 
     describe('エッジケース', () => {
         it('should return empty array when API returns no results', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: true,
                 status: 200,
                 json: async () => mockEmptyAppleRssResponse,
@@ -121,7 +122,7 @@ describe('fetchTracksFromChart', () => {
         });
 
         it('should filter out tracks without preview_url', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: true,
                 status: 200,
                 json: async () => mockAppleRssResponseWithoutPreview,
@@ -133,7 +134,7 @@ describe('fetchTracksFromChart', () => {
         });
 
         it('should handle malformed API response', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: true,
                 status: 200,
                 json: async () => ({ feed: null }),
@@ -145,7 +146,7 @@ describe('fetchTracksFromChart', () => {
         });
 
         it('should handle response without feed.results', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: true,
                 status: 200,
                 json: async () => ({ feed: {} }),
@@ -159,7 +160,7 @@ describe('fetchTracksFromChart', () => {
 
     describe('エラーハンドリング', () => {
         it('should throw error on 429 rate limit', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: false,
                 status: 429,
                 statusText: 'Too Many Requests',
@@ -171,7 +172,7 @@ describe('fetchTracksFromChart', () => {
         });
 
         it('should throw error on non-ok response', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: false,
                 status: 500,
                 statusText: 'Internal Server Error',
@@ -183,7 +184,7 @@ describe('fetchTracksFromChart', () => {
         });
 
         it('should throw error on network failure', async () => {
-            (global.fetch as jest.Mock).mockRejectedValueOnce(
+            fetchMock.mockRejectedValueOnce(
                 new Error('Network error')
             );
 
@@ -195,7 +196,7 @@ describe('fetchTracksFromChart', () => {
         it('should use timeout mechanism with AbortController', async () => {
             let abortSignal: AbortSignal | undefined;
             
-            (global.fetch as jest.Mock).mockImplementationOnce((url, options) => {
+            fetchMock.mockImplementationOnce((url, options) => {
                 abortSignal = options.signal;
                 return Promise.resolve({
                     ok: true,
@@ -211,7 +212,7 @@ describe('fetchTracksFromChart', () => {
         });
 
         it('should clear timeout on successful response', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: true,
                 status: 200,
                 json: async () => mockAppleRssResponse,
@@ -225,21 +226,29 @@ describe('fetchTracksFromChart', () => {
 });
 
 describe('fetchTracksFromChartWithRetry', () => {
+    let fetchMock: jest.SpyInstance;
+
     beforeEach(() => {
         jest.clearAllMocks();
-        jest.useFakeTimers();
         // Suppress console.error for retry tests
         jest.spyOn(console, 'error').mockImplementation(() => {});
+        fetchMock = jest.spyOn(global, 'fetch').mockImplementation();
     });
 
     afterEach(() => {
-        jest.useRealTimers();
         jest.restoreAllMocks();
     });
 
-    describe('リトライロジック', () => {
+    describe('リトライロジック (with fake timers)', () => {
+        beforeEach(() => {
+            jest.useFakeTimers();
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
         it('should succeed on first attempt', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
+            fetchMock.mockResolvedValueOnce({
                 ok: true,
                 status: 200,
                 json: async () => mockAppleRssResponse,
@@ -248,12 +257,12 @@ describe('fetchTracksFromChartWithRetry', () => {
             const tracks = await fetchTracksFromChartWithRetry(10, 3);
 
             expect(tracks).toHaveLength(3);
-            expect(global.fetch).toHaveBeenCalledTimes(1);
+            expect(fetchMock).toHaveBeenCalledTimes(1);
         });
 
         it('should retry on failure and succeed', async () => {
             // 最初は失敗、2回目は成功
-            (global.fetch as jest.Mock)
+            fetchMock
                 .mockRejectedValueOnce(new Error('Network error'))
                 .mockResolvedValueOnce({
                     ok: true,
@@ -272,19 +281,19 @@ describe('fetchTracksFromChartWithRetry', () => {
             const tracks = await promise;
 
             expect(tracks).toHaveLength(3);
-            expect(global.fetch).toHaveBeenCalledTimes(2);
+            expect(fetchMock).toHaveBeenCalledTimes(2);
         });
 
         it('should throw error after max retries', async () => {
             jest.useRealTimers(); // Use real timers for this test
             
-            (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+            fetchMock.mockRejectedValue(new Error('Network error'));
 
             await expect(
                 fetchTracksFromChartWithRetry(10, 2, 10) // maxRetries=2, baseDelay=10ms for speed
             ).rejects.toThrow('Failed to fetch tracks after 2 attempts');
             
-            expect(global.fetch).toHaveBeenCalledTimes(2);
+            expect(fetchMock).toHaveBeenCalledTimes(2);
             
             jest.useFakeTimers(); // Restore fake timers for other tests
         });
@@ -292,13 +301,13 @@ describe('fetchTracksFromChartWithRetry', () => {
         it('should use default maxRetries of 3', async () => {
             jest.useRealTimers(); // Use real timers for this test
             
-            (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+            fetchMock.mockRejectedValue(new Error('Network error'));
 
             await expect(
                 fetchTracksFromChartWithRetry(10, 3, 10) // baseDelay=10ms for speed
             ).rejects.toThrow();
             
-            expect(global.fetch).toHaveBeenCalledTimes(3);
+            expect(fetchMock).toHaveBeenCalledTimes(3);
             
             jest.useFakeTimers(); // Restore fake timers for other tests
         });
@@ -308,7 +317,7 @@ describe('fetchTracksFromChartWithRetry', () => {
         it('should increase delay exponentially on each retry', async () => {
             let callCount = 0;
 
-            (global.fetch as jest.Mock).mockImplementation(() => {
+            fetchMock.mockImplementation(() => {
                 callCount++;
                 if (callCount < 3) {
                     return Promise.reject(new Error('Network error'));
@@ -334,14 +343,14 @@ describe('fetchTracksFromChartWithRetry', () => {
         it('should respect maxDelay parameter', async () => {
             jest.useRealTimers(); // Use real timers for this test
             
-            (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+            fetchMock.mockRejectedValue(new Error('Network error'));
 
             await expect(
                 fetchTracksFromChartWithRetry(10, 2, 10, 20, 0) // baseDelay=10ms, maxDelay=20ms
             ).rejects.toThrow();
 
             // 2回試行されたことを確認
-            expect(global.fetch).toHaveBeenCalledTimes(2);
+            expect(fetchMock).toHaveBeenCalledTimes(2);
             
             jest.useFakeTimers(); // Restore fake timers for other tests
         });
@@ -351,7 +360,7 @@ describe('fetchTracksFromChartWithRetry', () => {
         it('should apply jitter to delay', async () => {
             jest.useRealTimers(); // Use real timers for this test
             
-            (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+            fetchMock.mockRejectedValue(new Error('Network error'));
 
             // ジッター有効（jitterFactor: 0.5）
             await expect(
@@ -359,7 +368,7 @@ describe('fetchTracksFromChartWithRetry', () => {
             ).rejects.toThrow();
 
             // 2回試行されたことを確認
-            expect(global.fetch).toHaveBeenCalledTimes(2);
+            expect(fetchMock).toHaveBeenCalledTimes(2);
             
             jest.useFakeTimers(); // Restore fake timers for other tests
         });
@@ -367,14 +376,14 @@ describe('fetchTracksFromChartWithRetry', () => {
         it('should ensure delay is non-negative even with jitter', async () => {
             jest.useRealTimers(); // Use real timers for this test
             
-            (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+            fetchMock.mockRejectedValue(new Error('Network error'));
 
             await expect(
                 fetchTracksFromChartWithRetry(10, 2, 10, 30000, 1.0) // maxRetries=2, jitterFactor=1.0
             ).rejects.toThrow();
 
             // 2回試行されたことを確認（遅延が負にならないことを間接的に確認）
-            expect(global.fetch).toHaveBeenCalledTimes(2);
+            expect(fetchMock).toHaveBeenCalledTimes(2);
             
             jest.useFakeTimers(); // Restore fake timers for other tests
         });

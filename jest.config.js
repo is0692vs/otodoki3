@@ -8,7 +8,6 @@ module.exports = {
   },
   collectCoverageFrom: [
     "src/lib/**/*.ts",
-    "src/lib/refill-methods/**/*.ts",
     "!src/**/*.d.ts",
     "!src/tests/**",
     "!src/**/__tests__/**",
