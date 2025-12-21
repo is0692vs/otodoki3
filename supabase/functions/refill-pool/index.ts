@@ -4,22 +4,55 @@ const APPLE_RSS_URL = "https://rss.applemarketingtools.com/api/v2/jp/music/most-
 const USER_AGENT = "otodoki3/1.0 (Supabase Edge Function)";
 const TIMEOUT_MS = 10000;
 
+interface AppleRssTrack {
+  id: string;
+  name: string;
+  artistName: string;
+  collectionName?: string;
+  url: string;
+  artworkUrl100?: string;
+  genres?: { name: string }[];
+  releaseDate?: string;
+}
+
+interface TrackPoolEntry {
+  track_id: string;
+  track_name: string;
+  artist_name: string;
+  collection_name: string | null;
+  preview_url: string;
+  artwork_url: string | null;
+  track_view_url: string | null;
+  genre: string | null;
+  release_date: string | null;
+  metadata: {
+    source: string;
+    fetched_from: string;
+    refilled_at: string;
+  };
+  fetched_at: string;
+}
+
 Deno.serve(async (req: Request) => {
     const startTime = Date.now();
 
-    // Authorization check
+    // Authorization check - verify Bearer token against service role key
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        console.error('Missing or invalid Authorization header');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!serviceRoleKey || authHeader !== `Bearer ${serviceRoleKey}`) {
+        console.error('Unauthorized request');
         return new Response(
-            JSON.stringify({ success: false, error: 'Missing or invalid Authorization header' }),
+            JSON.stringify({ success: false, error: 'Unauthorized' }),
             { status: 401, headers: { 'Content-Type': 'application/json' } }
         );
     }
 
     try {
-        const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        if (!supabaseUrl || !supabaseServiceKey) {
+            throw new Error('Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+        }
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         console.log(`Fetching tracks from Apple RSS Charts API: ${APPLE_RSS_URL}`);
@@ -48,23 +81,25 @@ Deno.serve(async (req: Request) => {
             );
         }
 
-        const tracksToUpsert = results.map((item: any) => ({
-            track_id: item.id,
-            track_name: item.name,
-            artist_name: item.artistName,
-            collection_name: item.collectionName || null,
-            preview_url: item.url || '', // Fallback to item.url as per existing logic
-            artwork_url: item.artworkUrl100 || null,
-            track_view_url: item.url || null,
-            genre: item.genres?.[0]?.name || null,
-            release_date: item.releaseDate || null,
-            metadata: {
-                source: 'apple_rss',
-                fetched_from: 'chart',
-                refilled_at: new Date().toISOString(),
-            },
-            fetched_at: new Date().toISOString(),
-        })).filter((t: any) => !!t.preview_url && !!t.track_id);
+        const tracksToUpsert: TrackPoolEntry[] = results
+            .map((item: AppleRssTrack) => ({
+                track_id: item.id,
+                track_name: item.name,
+                artist_name: item.artistName,
+                collection_name: item.collectionName || null,
+                preview_url: item.url || '',
+                artwork_url: item.artworkUrl100 || null,
+                track_view_url: item.url || null,
+                genre: item.genres?.[0]?.name || null,
+                release_date: item.releaseDate || null,
+                metadata: {
+                    source: 'apple_rss',
+                    fetched_from: 'chart',
+                    refilled_at: new Date().toISOString(),
+                },
+                fetched_at: new Date().toISOString(),
+            }))
+            .filter((t): t is TrackPoolEntry => !!t.preview_url && !!t.track_id);
 
         if (tracksToUpsert.length > 0) {
             console.log(`Upserting ${tracksToUpsert.length} tracks to track_pool...`);
@@ -81,9 +116,11 @@ Deno.serve(async (req: Request) => {
 
         // Trim pool
         console.log('Trimming track pool...');
-        const { error: rpcError } = await supabase.rpc('trim_track_pool', { max_size: 10000 });
+        const maxSize = parseInt(Deno.env.get('TRACK_POOL_MAX_SIZE') ?? '10000', 10);
+        const { error: rpcError } = await supabase.rpc('trim_track_pool', { max_size: maxSize });
         if (rpcError) {
             console.error('Error calling trim_track_pool:', rpcError);
+            throw rpcError;
         }
 
         const durationMs = Date.now() - startTime;
@@ -94,11 +131,10 @@ Deno.serve(async (req: Request) => {
             { headers: { 'Content-Type': 'application/json' } }
         );
 
-} catch (error: any) {
-    console.error('Error in refill-pool function:', error);
-    const message = error instanceof Error ? error.message : String(error);
-    return new Response(
-      JSON.stringify({ success: false, error: message }),
+    } catch (error: unknown) {
+        console.error('Error in refill-pool function:', error);
+        return new Response(
+            JSON.stringify({ success: false, error: 'An internal server error occurred' }),
             { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
     }
