@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
 /**
- * Fisher-Yates shuffle algorithm
- * @param array - Array to shuffle
- * @returns Shuffled array
+ * 配列の要素をランダムな順序に並べ替えた新しい配列を作成する。
+ *
+ * @param array - 元の配列（破壊的変更は行わない）
+ * @returns 引数 `array` の要素をランダムな順序に並べた新しい配列
  */
 function shuffleArray<T>(array: T[]): T[] {
     const shuffled = [...array];
@@ -16,10 +17,10 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 /**
- * GET /api/tracks/random
- * Returns random tracks from the track pool
- * @param request - Next.js request object
- * @returns JSON response with random tracks
+ * トラックプールからランダムに選んだトラックを返す API エンドポイントを処理する。
+ *
+ * @param request - Next.js のリクエスト。クエリパラメータ `count` を受け取り、返すトラック数を指定します（デフォルト 10、範囲 1〜100 に制限）。
+ * @returns 成功時は `{ success: true, tracks: [...] }` を含む JSON、失敗時は `{ success: false, error: '...' }` を含む JSON
  */
 export async function GET(request: NextRequest) {
     try {
