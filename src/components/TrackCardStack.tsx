@@ -1,12 +1,17 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import type { Track } from "../types/track-pool";
 import { TrackCard } from "./TrackCard";
 
 type SwipeDirection = "left" | "right";
+
+const SWIPE_THRESHOLD_PX = 110;
+const EXIT_X_OFFSET = 600;
+const EXIT_ROTATION_DEG = 10;
+const EXIT_DURATION = 0.18;
 
 export function TrackCardStack({ tracks }: { tracks: Track[] }) {
   // ライブラリ選定理由:
@@ -17,14 +22,14 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
   const [lastSwipe, setLastSwipe] = useState<SwipeDirection>("left");
 
   useEffect(() => {
-    setStack(tracks);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setStack((prev) => (prev.length === 0 ? tracks : prev));
   }, [tracks]);
 
-  const swipeThresholdPx = 110;
-
-  const zIndexFor = useMemo(() => {
-    return (index: number) => stack.length - index;
-  }, [stack.length]);
+  const zIndexFor = useCallback(
+    (index: number) => stack.length - index,
+    [stack.length]
+  );
 
   const swipeTop = (direction: SwipeDirection) => {
     const current = stack[0];
@@ -43,8 +48,8 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
 
   if (stack.length === 0) {
     return (
-      <div className="flex h-[70vh] max-h-140 w-[92vw] max-w-sm items-center justify-center rounded-3xl border border-black/8 bg-background text-foreground dark:border-white/[.145]">
-        <p className="text-sm opacity-80">楽曲がありません</p>
+      <div className="flex h-[70vh] max-h-140 w-[92vw] max-w-sm items-center justify-center rounded-3xl border border-black/8 bg-background text-foreground dark:border-white/15">
+        <p className="text-sm opacity-80">今日のディスカバリーはここまで 🎵</p>
       </div>
     );
   }
@@ -67,22 +72,22 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
               onDragEnd={(_, info) => {
                 if (!isTop) return;
 
-                if (info.offset.x > swipeThresholdPx) {
+                if (info.offset.x > SWIPE_THRESHOLD_PX) {
                   swipeTop("right");
                   return;
                 }
 
-                if (info.offset.x < -swipeThresholdPx) {
+                if (info.offset.x < -SWIPE_THRESHOLD_PX) {
                   swipeTop("left");
                 }
               }}
               initial={{ scale: 1, y: index * 3 }}
               animate={{ scale: 1, y: index * 3 }}
               exit={{
-                x: lastSwipe === "right" ? 600 : -600,
-                rotate: lastSwipe === "right" ? 10 : -10,
+                x: lastSwipe === "right" ? EXIT_X_OFFSET : -EXIT_X_OFFSET,
+                rotate: lastSwipe === "right" ? EXIT_ROTATION_DEG : -EXIT_ROTATION_DEG,
                 opacity: 0,
-                transition: { duration: 0.18 },
+                transition: { duration: EXIT_DURATION },
               }}
             >
               <TrackCard track={track} />

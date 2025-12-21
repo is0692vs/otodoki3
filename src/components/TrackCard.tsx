@@ -1,8 +1,21 @@
 import type { Track } from "../types/track-pool";
 import Image from "next/image";
 
+function isValidArtworkUrl(url: string | undefined): url is string {
+  if (!url) return false;
+  const trimmed = url.trim();
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export function TrackCard({ track }: { track: Track }) {
-  const artworkUrl = track.artwork_url?.trim();
+  const artworkUrl = isValidArtworkUrl(track.artwork_url)
+    ? track.artwork_url.trim()
+    : undefined;
   const backgroundImage = artworkUrl ? `url(${artworkUrl})` : undefined;
 
   return (
