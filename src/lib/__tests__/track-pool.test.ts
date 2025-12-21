@@ -1,9 +1,9 @@
-import { 
-    validateMetadata, 
-    getTracksFromPool, 
-    addTracksToPool, 
-    getPoolSize, 
-    trimPool 
+import {
+    validateMetadata,
+    getTracksFromPool,
+    addTracksToPool,
+    getPoolSize,
+    trimPool
 } from '../track-pool';
 import { supabase } from '../supabase';
 import { mockTracks } from '../__fixtures__/tracks';
@@ -16,7 +16,7 @@ async function cleanupTestTracks() {
         .from('track_pool')
         .delete()
         .or('track_id.in.(1001,1002,1003),metadata->>test_data.eq.true');
-    
+
     if (error) {
         // エラーがあればテストを失敗させる
         throw new Error(`Cleanup failed: ${error.message}`);
@@ -80,10 +80,10 @@ describeIf(hasSupabase)('track-pool integration tests', () => {
 
         it('should reflect changes after adding tracks', async () => {
             const initialSize = await getPoolSize();
-            
+
             // トラックを1つ追加
             await addTracksToPool([mockTracks[0]]);
-            
+
             const newSize = await getPoolSize();
             expect(newSize).toBeGreaterThanOrEqual(initialSize);
         });
@@ -92,18 +92,18 @@ describeIf(hasSupabase)('track-pool integration tests', () => {
     describe('addTracksToPool', () => {
         it('should add tracks to the pool', async () => {
             const initialSize = await getPoolSize();
-            
+
             await addTracksToPool(mockTracks);
-            
+
             const newSize = await getPoolSize();
             expect(newSize).toBeGreaterThan(initialSize);
         });
 
         it('should handle empty array', async () => {
             const initialSize = await getPoolSize();
-            
+
             await addTracksToPool([]);
-            
+
             const newSize = await getPoolSize();
             expect(newSize).toBe(initialSize);
         });
@@ -112,10 +112,10 @@ describeIf(hasSupabase)('track-pool integration tests', () => {
             // 同じトラックを2回追加
             await addTracksToPool([mockTracks[0]]);
             const sizeAfterFirst = await getPoolSize();
-            
+
             await addTracksToPool([mockTracks[0]]);
             const sizeAfterSecond = await getPoolSize();
-            
+
             // サイズは変わらないはず（upsert）
             expect(sizeAfterSecond).toBe(sizeAfterFirst);
         });
@@ -132,7 +132,7 @@ describeIf(hasSupabase)('track-pool integration tests', () => {
                 track_id: '9999',
                 metadata: ['invalid', 'array'] as unknown,
             } as unknown as Track;
-            
+
             // 配列メタデータは null に変換されるべき
             await expect(
                 addTracksToPool([trackWithInvalidMetadata])
@@ -150,12 +150,12 @@ describeIf(hasSupabase)('track-pool integration tests', () => {
         it('should return tracks from pool', async () => {
             // トラックを追加
             await addTracksToPool(mockTracks);
-            
+
             // 取得
             const tracks = await getTracksFromPool(2);
             expect(tracks.length).toBeGreaterThan(0);
             expect(tracks.length).toBeLessThanOrEqual(2);
-            
+
             // Track型の検証
             if (tracks.length > 0) {
                 expect(tracks[0]).toHaveProperty('track_id');
@@ -170,9 +170,9 @@ describeIf(hasSupabase)('track-pool integration tests', () => {
             await addTracksToPool([mockTracks[0]]);
             await new Promise(resolve => setTimeout(resolve, 100));
             await addTracksToPool([mockTracks[1]]);
-            
+
             const tracks = await getTracksFromPool(10);
-            
+
             if (tracks.length >= 2) {
                 // fetched_at の順序を確認（古い順）
                 // 実際にはデータベースから取得するので、正確な検証は難しいが、
@@ -183,7 +183,7 @@ describeIf(hasSupabase)('track-pool integration tests', () => {
 
         it('should respect the count limit', async () => {
             await addTracksToPool(mockTracks);
-            
+
             const tracks = await getTracksFromPool(1);
             expect(tracks.length).toBeLessThanOrEqual(1);
         });
@@ -193,13 +193,13 @@ describeIf(hasSupabase)('track-pool integration tests', () => {
         it('should trim pool when size exceeds max', async () => {
             // 複数のトラックを追加
             await addTracksToPool(mockTracks);
-            
+
             const initialSize = await getPoolSize();
-            
+
             // 非常に小さいサイズで trim（例: 1）
             // ただし、他のトラックも存在する可能性があるので慎重に
             await trimPool(1);
-            
+
             const newSize = await getPoolSize();
             expect(newSize).toBeLessThanOrEqual(Math.max(initialSize, 1));
         });
@@ -211,10 +211,10 @@ describeIf(hasSupabase)('track-pool integration tests', () => {
         it('should keep tracks when pool size is below max', async () => {
             await addTracksToPool([mockTracks[0]]);
             const sizeBefore = await getPoolSize();
-            
+
             // 十分大きいサイズで trim
             await trimPool(10000);
-            
+
             const sizeAfter = await getPoolSize();
             expect(sizeAfter).toBe(sizeBefore);
         });
@@ -249,7 +249,7 @@ describeIf(hasSupabase)('track-pool error handling', () => {
                 track_id: '8888',
                 // track_name, artist_name, preview_url が欠けている
             } as unknown as Track;
-            
+
             await expect(
                 addTracksToPool([invalidTrack])
             ).rejects.toThrow();
