@@ -4,7 +4,7 @@ const APPLE_RSS_URL = "https://rss.applemarketingtools.com/api/v2/jp/music/most-
 const USER_AGENT = "otodoki3/1.0 (Supabase Edge Function)";
 const TIMEOUT_MS = 10000;
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
     const startTime = Date.now();
 
     // Authorization check
@@ -94,10 +94,11 @@ Deno.serve(async (req) => {
             { headers: { 'Content-Type': 'application/json' } }
         );
 
-    } catch (error) {
-        console.error('Error in refill-pool function:', error);
-        return new Response(
-            JSON.stringify({ success: false, error: error.message }),
+} catch (error: any) {
+    console.error('Error in refill-pool function:', error);
+    const message = error instanceof Error ? error.message : String(error);
+    return new Response(
+      JSON.stringify({ success: false, error: message }),
             { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
     }
