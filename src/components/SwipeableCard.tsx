@@ -1,9 +1,30 @@
 "use client";
 
-import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { useState } from "react";
-import { Track } from "../types/track-pool";
+import { motion, useMotionValue, useTransform, PanInfo, animate } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import type { Track } from "../types/track-pool";
 import { TrackCard } from "./TrackCard";
+
+const ROTATE_INPUT_RANGE_PX = 200;
+const ROTATE_OUTPUT_RANGE_DEG = 30;
+
+const OPACITY_INPUT_RANGE_PX = [-200, -150, 0, 150, 200] as const;
+const OPACITY_OUTPUT_RANGE = [0, 1, 1, 1, 0] as const;
+
+const SWIPE_THRESHOLD_SCREEN_WIDTH_RATIO = 0.25;
+const VELOCITY_THRESHOLD_PX_PER_SEC = 200;
+
+const EXIT_X_OFFSET_PX = 500;
+const ON_SWIPE_DELAY_MS = 10; // exitX state update → exit animation uses it
+
+const DRAG_ELASTIC = 0.2;
+const WHILE_DRAG_SCALE = 1.05;
+
+const STACK_Y_STEP_PX = 10;
+const STACK_Y_CAP_PX = 30;
+
+const EXIT_DURATION_SEC = 0.2;
+const SNAP_BACK_SPRING = { type: "spring", stiffness: 350, damping: 30 } as const;
 
 interface SwipeableCardProps {
     track: Track;
@@ -15,16 +36,19 @@ interface SwipeableCardProps {
 export function SwipeableCard({ track, isTop, onSwipe, index }: SwipeableCardProps) {
     const [exitX, setExitX] = useState<number | null>(null);
     const x = useMotionValue(0);
+    const onSwipeTimeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Rail motion (Fan arc)
-    // Input range [-200, 200] roughly maps to screen width drags
-    // Output rotation [-30, 30] creates the fan effect
-    const rotate = useTransform(x, [-200, 200], [-30, 30]);
+    useEffect(() => {
+        return () => {
+            if (onSwipeTimeoutIdRef.current) {
+                clearTimeout(onSwipeTimeoutIdRef.current);
+                onSwipeTimeoutIdRef.current = null;
+            }
+        };
+    }, []);
 
-    // Opacity fade out when dragging far
-    // const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]); // Optional per user snippet, keeping it simpler for now or strictly following snippet?
-    // User snippet: const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
-    const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
+    const rotate = useTransform(x, [-ROTATE_INPUT_RANGE_PX, ROTATE_INPUT_RANGE_PX], [-ROTATE_OUTPUT_RANGE_DEG, ROTATE_OUTPUT_RANGE_DEG]);
+    const opacity = useTransform(x, OPACITY_INPUT_RANGE_PX, OPACITY_OUTPUT_RANGE);
 
     // While regular cards just stack, the top one is interactive
     const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -33,45 +57,28 @@ export function SwipeableCard({ track, isTop, onSwipe, index }: SwipeableCardPro
         const offset = info.offset.x;
         const velocity = info.velocity.x;
 
-        // Dynamic threshold based on screen width if possible, else fallback
         const screenWidth = typeof window !== "undefined" ? window.innerWidth : 375;
-        // User requested "Screen Width Threshold"
-        // Let's say 25-30% of screen width is a good intent threshold
-        const swipeThreshold = screenWidth * 0.25;
-
-        // Velocity threshold to allow "flicks"
-        const velocityThreshold = 200; // pixels per second
-
-        // Determine direction
-        // Logic: 
-        // 1. If moved far enough (offset > threshold), SWIPE.
-        // 2. If moved fast enough (velocity > threshold) AND moved in that direction, SWIPE.
-        // 3. Otherwise, return.
+        const swipeThreshold = screenWidth * SWIPE_THRESHOLD_SCREEN_WIDTH_RATIO;
 
         const isRight = offset > 0;
         const isLeft = offset < 0;
 
-        let swipedRight = false;
-        let swipedLeft = false;
+        const swipedRight = isRight && (offset > swipeThreshold || velocity > VELOCITY_THRESHOLD_PX_PER_SEC);
+        const swipedLeft = isLeft && (offset < -swipeThreshold || velocity < -VELOCITY_THRESHOLD_PX_PER_SEC);
 
-        if (isRight) {
-            if (offset > swipeThreshold) swipedRight = true;
-            else if (velocity > velocityThreshold) swipedRight = true;
-        } else if (isLeft) {
-            if (offset < -swipeThreshold) swipedLeft = true;
-            else if (velocity < -velocityThreshold) swipedLeft = true;
+        if (onSwipeTimeoutIdRef.current) {
+            clearTimeout(onSwipeTimeoutIdRef.current);
+            onSwipeTimeoutIdRef.current = null;
         }
 
         if (swipedRight) {
-            setExitX(500); // Fly off screen
-            setTimeout(() => onSwipe("right", track), 10);
+            setExitX(EXIT_X_OFFSET_PX);
+            onSwipeTimeoutIdRef.current = setTimeout(() => onSwipe("right", track), ON_SWIPE_DELAY_MS);
         } else if (swipedLeft) {
-            setExitX(-500);
-            setTimeout(() => onSwipe("left", track), 10);
+            setExitX(-EXIT_X_OFFSET_PX);
+            onSwipeTimeoutIdRef.current = setTimeout(() => onSwipe("left", track), ON_SWIPE_DELAY_MS);
         } else {
-            // Snap back
-            // We rely on dragConstraints to snap back smoothly.
-            // No manual set(0) needed as it conflicts with constraints animation.
+            animate(x, 0, SNAP_BACK_SPRING);
         }
     };
 
@@ -85,32 +92,18 @@ export function SwipeableCard({ track, isTop, onSwipe, index }: SwipeableCardPro
                 opacity
             }}
             drag={isTop ? "x" : false}
-            dragConstraints={{ left: 0, right: 0 }} // This creates the 'snap back' force if we don't override it? 
-            // User snippet had NO dragConstraints in one example, but 'minimal' example has none?
-            // Actually user snippet:
-            // const handleDragEnd = ... else { x.set(0) }
-            // And `dragConstraints` usage usually auto-snaps if you release.
-            // If we put dragConstraints={{ left: 0, right: 0 }}, it snaps back HARD. 
-            // For "rail" feel we want free movement then custom snap.
-            // So we generally REMOVE dragConstraints or make them infinite, then handle snap ourselves.
-            // WAIT. If we use `x` motion value, we conflict with `dragConstraints` if we want manual control.
-            // The user snippet has `drag={isTop ? "x" : false}` and `onDragEnd` doing `x.set(0)`.
-            // This suggests NO dragConstraints or loose ones. 
-            // BUT, `dragElastic` is commonly used.
-            // Let's try NO dragConstraints to allow full freedom, then manual snap back.
-            dragElastic={0.1} // Add some resistance
+            dragElastic={DRAG_ELASTIC}
             onDragEnd={handleDragEnd}
-            whileDrag={{ scale: 1.05 }}
-            initial={{ scale: isTop ? 1 : 0.95, y: isTop ? 0 : index * 10 }} // Stacking effect
+            whileDrag={{ scale: WHILE_DRAG_SCALE }}
+            initial={{ scale: isTop ? 1 : 0.95, y: isTop ? 0 : Math.min(index * STACK_Y_STEP_PX, STACK_Y_CAP_PX) }}
             animate={{
                 scale: isTop ? 1 : 0.95,
-                y: isTop ? 0 : Math.min(index * 10, 30), // Cap stacking depth
-                x: 0 // Ensure it resets if re-rendered as top? No, x is motion value.
+                y: isTop ? 0 : Math.min(index * STACK_Y_STEP_PX, STACK_Y_CAP_PX)
             }}
             exit={{
-                x: exitX ?? (track.track_id ? -500 : 500), // Default exit if somehow needed, but exitX state should drive it
+                x: exitX ?? EXIT_X_OFFSET_PX,
                 opacity: 0,
-                transition: { duration: 0.2 }
+                transition: { duration: EXIT_DURATION_SEC }
             }}
         >
             <TrackCard track={track} />
