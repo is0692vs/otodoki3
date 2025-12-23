@@ -1,17 +1,12 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 
 import type { Track } from "../types/track-pool";
-import { TrackCard } from "./TrackCard";
+import { SwipeableCard } from "./SwipeableCard";
 
 type SwipeDirection = "left" | "right";
-
-const SWIPE_THRESHOLD_PX = 110;
-const EXIT_X_OFFSET = 600;
-const EXIT_ROTATION_DEG = 10;
-const EXIT_DURATION = 0.18;
 
 export function TrackCardStack({ tracks }: { tracks: Track[] }) {
   // ライブラリ選定理由:
@@ -19,31 +14,24 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
   // - framer-motion は react@^18 || ^19 をサポートしており、このリポジトリ(react 19)で安全に導入できる
 
   const [stack, setStack] = useState<Track[]>(tracks);
-  const [lastSwipe, setLastSwipe] = useState<SwipeDirection>("left");
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setStack((prev) => (prev.length === 0 ? tracks : prev));
   }, [tracks]);
 
-  const zIndexFor = useCallback(
-    (index: number) => stack.length - index,
-    [stack.length]
-  );
-
-  const swipeTop = (direction: SwipeDirection) => {
-    const current = stack[0];
-    if (!current) return;
-
-    setLastSwipe(direction);
-
+  const swipeTop = (direction: SwipeDirection, track: Track) => {
     if (direction === "right") {
-      console.log("Like", current.track_id);
+      console.log("Like", track.track_id);
     } else {
-      console.log("Skip", current.track_id);
+      console.log("Skip", track.track_id);
     }
 
-    setStack((prev) => prev.slice(1));
+    setStack((prev) => {
+      if (prev.length === 0) return prev;
+      if (prev[0]?.track_id === track.track_id) return prev.slice(1);
+      return prev.filter((t) => t.track_id !== track.track_id);
+    });
   };
 
   if (stack.length === 0) {
@@ -61,37 +49,13 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
           const isTop = index === 0;
 
           return (
-            <motion.div
+            <SwipeableCard
               key={track.track_id}
-              className="absolute inset-0"
-              style={{ zIndex: zIndexFor(index) }}
-              drag={isTop ? "x" : false}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.18}
-              whileDrag={{ rotate: isTop ? 3 : 0 }}
-              onDragEnd={(_, info) => {
-                if (!isTop) return;
-
-                if (info.offset.x > SWIPE_THRESHOLD_PX) {
-                  swipeTop("right");
-                  return;
-                }
-
-                if (info.offset.x < -SWIPE_THRESHOLD_PX) {
-                  swipeTop("left");
-                }
-              }}
-              initial={{ scale: 1, y: index * 3 }}
-              animate={{ scale: 1, y: index * 3 }}
-              exit={{
-                x: lastSwipe === "right" ? EXIT_X_OFFSET : -EXIT_X_OFFSET,
-                rotate: lastSwipe === "right" ? EXIT_ROTATION_DEG : -EXIT_ROTATION_DEG,
-                opacity: 0,
-                transition: { duration: EXIT_DURATION },
-              }}
-            >
-              <TrackCard track={track} />
-            </motion.div>
+              track={track}
+              isTop={isTop}
+              index={index}
+              onSwipe={swipeTop}
+            />
           );
         })}
       </AnimatePresence>
