@@ -47,6 +47,31 @@ export function SwipeableCard({ track, isTop, onSwipe, index }: SwipeableCardPro
         };
     }, []);
 
+    useEffect(() => {
+        if (!isTop) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "ArrowLeft") {
+                if (onSwipeTimeoutIdRef.current) {
+                    clearTimeout(onSwipeTimeoutIdRef.current);
+                    onSwipeTimeoutIdRef.current = null;
+                }
+                setExitX(-EXIT_X_OFFSET_PX);
+                onSwipeTimeoutIdRef.current = setTimeout(() => onSwipe("left", track), ON_SWIPE_DELAY_MS);
+            } else if (e.key === "ArrowRight") {
+                if (onSwipeTimeoutIdRef.current) {
+                    clearTimeout(onSwipeTimeoutIdRef.current);
+                    onSwipeTimeoutIdRef.current = null;
+                }
+                setExitX(EXIT_X_OFFSET_PX);
+                onSwipeTimeoutIdRef.current = setTimeout(() => onSwipe("right", track), ON_SWIPE_DELAY_MS);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isTop, track, onSwipe]);
+
     const rotate = useTransform(x, [-ROTATE_INPUT_RANGE_PX, ROTATE_INPUT_RANGE_PX], [-ROTATE_OUTPUT_RANGE_DEG, ROTATE_OUTPUT_RANGE_DEG]);
     const opacity = useTransform(x, OPACITY_INPUT_RANGE_PX, OPACITY_OUTPUT_RANGE);
 
@@ -105,6 +130,9 @@ export function SwipeableCard({ track, isTop, onSwipe, index }: SwipeableCardPro
                 opacity: 0,
                 transition: { duration: EXIT_DURATION_SEC }
             }}
+            role="button"
+            aria-label={`${track.track_name} by ${track.artist_name}をスワイプ`}
+            tabIndex={isTop ? 0 : -1}
         >
             <TrackCard track={track} />
         </motion.div>
