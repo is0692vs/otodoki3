@@ -1,10 +1,11 @@
 "use client";
 
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { Track, CardItem } from "../types/track-pool";
 import { useAudioPlayer } from "../hooks/useAudioPlayer";
+import { useAutoRefill } from "../hooks/useAutoRefill";
 import { SwipeableCard } from "./SwipeableCard";
 import { AudioProgressBar } from "./AudioProgressBar";
 
@@ -23,6 +24,12 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
   const [stack, setStack] = useState<CardItem[]>(initialStack);
   const { play, stop, pause, resume, isPlaying, progress } = useAudioPlayer();
   const hasUserInteractedRef = useRef(false);
+
+  const handleRefill = useCallback((newTracks: CardItem[]) => {
+    setStack((prev) => [...prev, ...newTracks]);
+  }, []);
+
+  const { isRefilling, error } = useAutoRefill(stack, handleRefill);
 
   useEffect(() => {
     setStack((prev) => (prev.length === 0 ? initialStack : prev));
@@ -133,6 +140,16 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
       <div className="absolute inset-x-0 bottom-0 z-200">
         <AudioProgressBar progress={progress} />
       </div>
+      {isRefilling && (
+        <div className="fixed bottom-4 right-4 rounded-full bg-black/80 px-4 py-2 text-sm text-white">
+          楽曲を補充中...
+        </div>
+      )}
+      {error && (
+        <div className="fixed bottom-4 right-4 rounded-lg bg-red-500/90 px-4 py-2 text-sm text-white">
+          補充に失敗しました
+        </div>
+      )}
       <AnimatePresence initial={false}>
         {stack.map((item, index) => {
           const isTop = index === 0;
