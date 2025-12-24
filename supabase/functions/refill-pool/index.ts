@@ -38,8 +38,8 @@ Deno.serve(async (req: Request) => {
 
     // Authorization check - verify Bearer token against service role key
     const authHeader = req.headers.get('Authorization');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    if (!serviceRoleKey || authHeader !== `Bearer ${serviceRoleKey}`) {
+    const cronAuthKey = Deno.env.get('CRON_AUTH_KEY');
+    if (!cronAuthKey || authHeader !== `Bearer ${cronAuthKey}`) {
         console.error('Unauthorized request');
         return new Response(
             JSON.stringify({ success: false, error: 'Unauthorized' }),
