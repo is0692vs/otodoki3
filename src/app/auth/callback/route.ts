@@ -10,14 +10,12 @@ export async function GET(request: Request) {
     // Validate and normalize the 'next' parameter to prevent open-redirect
     let normalizedNext = '/'
     if (next.startsWith('/') && !next.startsWith('//')) {
-        // Reject any URL scheme patterns (javascript:, data:, etc.)
-        const dangerousPatterns = ['javascript:', 'data:', 'vbscript:', 'file:', ':', '\\'];
+        // Reject URL scheme patterns (e.g., javascript:, data:, etc.) but allow valid paths with colons
         const lowerNext = next.toLowerCase();
-        const hasDangerousScheme = dangerousPatterns.some(pattern =>
-            lowerNext.includes(pattern)
-        );
-
-        if (hasDangerousScheme) {
+        // Use regex to detect URL schemes at the start of the string
+        const hasURLScheme = /^[a-z][a-z0-9+.-]*:/i.test(lowerNext);
+        
+        if (hasURLScheme || lowerNext.includes('\\')) {
             normalizedNext = '/';
         } else {
             // Resolve dot-segments (e.g., /../ or /./)
@@ -38,15 +36,27 @@ export async function GET(request: Request) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            const forwardedHost = request.headers.get('x-forwarded-host')
-            const forwardedProto = request.headers.get('x-forwarded-proto')
-
+            // Get redirect host - validate x-forwarded-host against allowlist
+            const forwardedHost = request.headers.get('x-forwarded-host');
+            const forwardedProto = request.headers.get('x-forwarded-proto');
+            
+            // Parse allowed hosts from environment
+            const allowedHosts = process.env.ALLOWED_HOSTS?.split(',').map(h => h.trim().toLowerCase()) ?? [];
+            
+            let redirectHost = origin; // Default to current origin
+            
             if (forwardedHost) {
-                const proto = forwardedProto === 'https' ? 'https' : 'http';
-                return NextResponse.redirect(`${proto}://${forwardedHost}${normalizedNext}`)
+                const lowerForwardedHost = forwardedHost.toLowerCase();
+                // Only use forwardedHost if it's in the allowlist
+                if (allowedHosts.length > 0 && allowedHosts.includes(lowerForwardedHost)) {
+                    // Sanitize proto to only allow 'https' or 'http'
+                    const proto = forwardedProto === 'https' ? 'https' : 'http';
+                    redirectHost = `${proto}://${forwardedHost}`;
+                }
+                // If allowlist is empty or host is not in it, fallback to origin
             }
-
-            return NextResponse.redirect(`${origin}${normalizedNext}`)
+            
+            return NextResponse.redirect(`${redirectHost}${normalizedNext}`);
         }
     }
 
