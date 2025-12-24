@@ -19,7 +19,7 @@ export function useAutoRefill(
 
         try {
             // 既存の初回ロードと同じエンドポイントを使用
-            const response = await fetch('/api/tracks');
+            const response = await fetch('/api/tracks/random');
 
             if (!response.ok) {
                 throw new Error(`Failed to refill tracks: ${response.status}`);
