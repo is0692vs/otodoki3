@@ -21,6 +21,7 @@ describe('GET /api/test-db', () => {
                     data: '2024-01-01T00:00:00Z',
                     error: null,
                 }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
 
             const response = await GET();
@@ -45,6 +46,7 @@ describe('GET /api/test-db', () => {
                         message: 'function not found',
                     },
                 }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
 
             const response = await GET();
@@ -70,6 +72,7 @@ describe('GET /api/test-db', () => {
                         message: 'Connection error',
                     },
                 }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
 
             const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -137,6 +140,7 @@ describe('GET /api/test-db', () => {
                     data: null,
                     error: null,
                 }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
 
             const response = await GET();
@@ -159,6 +163,7 @@ describe('GET /api/test-db', () => {
                             message: `Error with code ${code}`,
                         },
                     }),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } as any);
 
                 const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

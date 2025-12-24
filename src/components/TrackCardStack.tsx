@@ -79,7 +79,7 @@ const fetchWithRetry = async (
 export function TrackCardStack({
   tracks,
   mode = "discover",
-  sourcePlaylist,
+  sourcePlaylist: _sourcePlaylist,
 }: {
   tracks: Track[];
   mode?: "discover" | "playlist";
@@ -158,6 +158,7 @@ export function TrackCardStack({
     if (!hasUserInteractedRef.current) return;
 
     play(top.preview_url);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stack[0], play]);
 
   const swipeTop = (direction: SwipeDirection, item: CardItem) => {

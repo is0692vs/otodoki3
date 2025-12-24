@@ -16,6 +16,7 @@ describe('GET /api/tracks/random', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockSupabase = createMockSupabaseClient();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         vi.mocked(createClient).mockResolvedValue(mockSupabase as any);
     });
 

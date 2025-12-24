@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { useAutoRefill } from './useAutoRefill';
 import type { CardItem, Track } from '@/types/track-pool';
 
@@ -88,6 +88,7 @@ describe('useAutoRefill', () => {
     });
 
     it('should handle fetch error', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const stack: CardItem[] = Array(2).fill({ id: 1 } as any);
         const onRefill = vi.fn();
 
@@ -105,6 +106,7 @@ describe('useAutoRefill', () => {
 
     it('should allow retry after error delay when triggered', async () => {
         vi.useFakeTimers();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const stack: CardItem[] = Array(2).fill({ id: 1 } as any);
         const onRefill = vi.fn();
 
@@ -137,6 +139,7 @@ describe('useAutoRefill', () => {
         // But in reality, the user would swipe, reducing stack length.
 
         // Simulate stack reduction
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newStack = Array(1).fill({ id: 1 } as any);
         rerender({ s: newStack });
 

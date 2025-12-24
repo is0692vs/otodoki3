@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import { SupabaseClient } from '@supabase/supabase-js';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type MockSupabaseClient = Partial<SupabaseClient<any, "public", any>> & {
     mockSelect: ReturnType<typeof vi.fn>;
     mockInsert: ReturnType<typeof vi.fn>;
@@ -52,13 +53,18 @@ export function createMockSupabaseClient(): MockSupabaseClient {
     const mockAnd = vi.fn();
 
     // クエリビルダー（await 可能なモック）を生成
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const createQueryBuilder = (): any => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const builder: any = {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             _pending: undefined as Promise<any> | any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             _resolveWith: undefined as ((...args: any[]) => any) | undefined,
         };
 
         // DB から結果を返す系（await 時にこの結果を返す）
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const resultMethods: Record<string, (...args: any[]) => any> = {
             select: mockSelect,
             insert: mockInsert,
@@ -71,6 +77,7 @@ export function createMockSupabaseClient(): MockSupabaseClient {
         };
 
         // フィルタリングだけ行う系（結果は変えずにチェーン継続）
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const chainOnlyMethods: Record<string, (...args: any[]) => any> = {
             eq: mockEq,
             gt: mockGt,
@@ -86,6 +93,7 @@ export function createMockSupabaseClient(): MockSupabaseClient {
         };
 
         Object.entries(resultMethods).forEach(([name, mock]) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             builder[name] = (...args: any[]) => {
                 builder._resolveWith = mock;
                 builder._pending = mock(...args);
@@ -94,6 +102,7 @@ export function createMockSupabaseClient(): MockSupabaseClient {
         });
 
         Object.entries(chainOnlyMethods).forEach(([name, mock]) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             builder[name] = (...args: any[]) => {
                 mock(...args);
                 return builder;
@@ -101,6 +110,7 @@ export function createMockSupabaseClient(): MockSupabaseClient {
         });
 
         Object.defineProperty(builder, 'then', {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             value: (onFulfilled?: any, onRejected?: any) => {
                 const pending = builder._pending ?? Promise.resolve({ data: null, error: null });
                 return Promise.resolve(pending).then(onFulfilled, onRejected);
@@ -108,6 +118,7 @@ export function createMockSupabaseClient(): MockSupabaseClient {
             writable: true,
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         builder.catch = (onRejected?: any) => builder.then(undefined, onRejected);
 
         return builder;
@@ -164,6 +175,7 @@ export function createMockNextRequest(url: string, options?: RequestInit) {
         method: options?.method || 'GET',
         headers: new Headers(options?.headers),
         json: async () => (options?.body ? JSON.parse(options.body as string) : {}),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 }
 

@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextResponse } from 'next/server';
 import { POST } from './route';
 import { createMockSupabaseClient, mockAuthenticatedUser } from '@/test/api-test-utils';
 
@@ -30,6 +29,7 @@ describe('POST /api/tracks/like', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockSupabase = createMockSupabaseClient();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         vi.mocked(createClient).mockResolvedValue(mockSupabase as any);
         vi.mocked(rateLimit).mockReturnValue({ allowed: true, remaining: 100 });
     });
