@@ -17,7 +17,7 @@ import {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import type { CardItem, Track } from "../types/track-pool";
+import type { CardItem } from "../types/track-pool";
 import { TrackCard } from "./TrackCard";
 import { TutorialCard } from "./TutorialCard";
 

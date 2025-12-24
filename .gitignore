@@ -42,3 +42,8 @@ yarn-error.log*
 next-env.d.ts
 supabase/.temp/
 .env*.local
+
+# PWA自動生成ファイル
+public/sw.js
+public/workbox-*.js
+
