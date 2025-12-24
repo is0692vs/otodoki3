@@ -2,13 +2,13 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 type LikeWithTrack = {
-    track_id: any;
-    created_at: any;
+    track_id: string;
+    created_at: string | null;
     track_pool: Array<{
-        track_name: any;
-        artist_name: any;
-        artwork_url: any;
-        preview_url: any;
+        track_name: string;
+        artist_name: string;
+        artwork_url: string | null;
+        preview_url: string;
     }> | null;
 };
 
