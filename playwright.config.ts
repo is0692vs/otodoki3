@@ -1,4 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+
+// .env.test を読み込み
+dotenv.config({ path: '.env.test' });
 
 export default defineConfig({
     testDir: './e2e',
@@ -17,5 +21,11 @@ export default defineConfig({
         command: 'npm run dev',
         url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
+        env: {
+            NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            TEST_USER_EMAIL: process.env.TEST_USER_EMAIL!,
+            TEST_USER_PASSWORD: process.env.TEST_USER_PASSWORD!,
+        },
     },
 });
