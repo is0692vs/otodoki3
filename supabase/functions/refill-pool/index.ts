@@ -4,6 +4,49 @@ const APPLE_RSS_URL = "https://rss.applemarketingtools.com/api/v2/jp/music/most-
 const USER_AGENT = "otodoki3/1.0 (Supabase Edge Function)";
 const TIMEOUT_MS = 10000;
 
+/**
+ * iTunes Search API から previewUrl を取得
+ */
+async function getPreviewUrlFromItunesApi(
+    trackId: string,
+    timeoutMs: number = 3000
+): Promise<string | null> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        const url = `https://itunes.apple.com/lookup?id=${encodeURIComponent(trackId)}&country=jp`;
+        const response = await fetch(url, {
+            signal: controller.signal,
+            headers: { 'User-Agent': USER_AGENT },
+        });
+
+        if (!response.ok) {
+            console.warn(`iTunes API lookup failed for track ${trackId}: ${response.status}`);
+            return null;
+        }
+
+        const data = await response.json();
+        const result = data.results?.[0];
+
+        if (!result?.previewUrl) {
+            console.warn(`No previewUrl found for track ${trackId}`);
+            return null;
+        }
+
+        return result.previewUrl;
+    } catch (error) {
+        if (error instanceof Error && (error.name === 'AbortError' || error.code === 'ABORT_ERR')) {
+            console.warn(`iTunes API lookup timeout for track ${trackId}`);
+        } else {
+            console.warn(`iTunes API lookup error for track ${trackId}:`, error);
+        }
+        return null;
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
+
 interface AppleRssTrack {
     id: string;
     name: string;
@@ -13,6 +56,7 @@ interface AppleRssTrack {
     artworkUrl100?: string;
     genres?: { name: string }[];
     releaseDate?: string;
+    previewUrl?: string; // iTunes Search API の previewUrl フィールド
 }
 
 interface TrackPoolEntry {
@@ -96,15 +140,27 @@ Deno.serve(async (req: Request) => {
             );
         }
 
-        const tracksToUpsert: TrackPoolEntry[] = results
-            .map((item: AppleRssTrack) => ({
+        // iTunes Search API から previewUrl を取得しながら TrackPoolEntry を作成
+        const tracksToUpsert: TrackPoolEntry[] = [];
+        
+        for (const item of results) {
+            // iTunes Search API から previewUrl を取得
+            const previewUrl = await getPreviewUrlFromItunesApi(item.id);
+            
+            // previewUrl がない場合はスキップ
+            if (!previewUrl) {
+                console.warn(`Skipping track ${item.id} (${item.name}) - no previewUrl available`);
+                continue;
+            }
+            
+            tracksToUpsert.push({
                 track_id: item.id,
                 track_name: item.name,
                 artist_name: item.artistName,
                 collection_name: item.collectionName || null,
-                preview_url: item.url || '',
+                preview_url: previewUrl, // ✅ iTunes Search API から取得した previewUrl
                 artwork_url: item.artworkUrl100 || null,
-                track_view_url: item.url || null,
+                track_view_url: item.url || null, // ✅ Apple Music ページ URL
                 genre: item.genres?.[0]?.name || null,
                 release_date: item.releaseDate || null,
                 metadata: {
@@ -113,8 +169,8 @@ Deno.serve(async (req: Request) => {
                     refilled_at: new Date().toISOString(),
                 },
                 fetched_at: new Date().toISOString(),
-            }))
-            .filter((t): t is TrackPoolEntry => !!t.preview_url && !!t.track_id);
+            });
+        }
 
         if (tracksToUpsert.length > 0) {
             console.log(`Upserting ${tracksToUpsert.length} tracks to track_pool...`);

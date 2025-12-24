@@ -88,6 +88,15 @@ export const mockEmptyAppleRssResponse = {
 };
 
 /**
+ * iTunes Search API のモックレスポンス
+ */
+export const mockItunesSearchResponses: Record<string, { results: { previewUrl: string }[] }> = {
+    '2001': { results: [{ previewUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/chart1.m4a' }] },
+    '2002': { results: [{ previewUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/chart2.m4a' }] },
+    '2003': { results: [{ previewUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/chart3.m4a' }] },
+};
+
+/**
  * preview_urlがないApple RSS APIレスポンス
  */
 export const mockAppleRssResponseWithoutPreview = {
