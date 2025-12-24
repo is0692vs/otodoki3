@@ -193,10 +193,6 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
       (async () => {
         setActionInProgress(true);
         try {
-          const pending = toast.push(
-            { type: "info", message: "いいねを保存しています..." },
-            10000
-          );
           await fetchWithRetry(
             "/api/tracks/like",
             {
@@ -208,7 +204,6 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
             5000,
             300
           );
-          toast.dismiss(pending);
         } catch (err) {
           console.error("Failed to save like after retries", {
             track_id: id,

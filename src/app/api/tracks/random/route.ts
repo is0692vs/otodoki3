@@ -16,6 +16,9 @@ function shuffleArray<T>(array: T[]): T[] {
     return shuffled;
 }
 
+// Maximum number of excluded IDs to prevent query string length issues
+const MAX_EXCLUDE = 1000;
+
 /**
  * トラックプールからランダムに選んだトラックを返す API エンドポイントを処理する。
  * 認証済みユーザーの場合は、履歴に基づいて自動的にフィルタリングを行う。
@@ -44,34 +47,53 @@ export async function GET(request: NextRequest) {
         if (user) {
             // 1. Dislike: 直近30日
             const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-            const { data: dislikes } = await supabase
+            const { data: dislikes, error: dislikeError } = await supabase
                 .from('dislikes')
                 .select('track_id')
                 .eq('user_id', user.id)
                 .gte('created_at', thirtyDaysAgo);
 
-            if (dislikes) {
+            if (dislikeError) {
+                console.error('Failed to fetch dislikes for filtering:', {
+                    error: dislikeError,
+                    userId: user.id,
+                });
+            } else if (dislikes) {
                 excludedTrackIds.push(...dislikes.map(d => d.track_id));
             }
 
             // 2. Like: 直近7日
             const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-            const { data: likes } = await supabase
+            const { data: likes, error: likeError } = await supabase
                 .from('likes')
                 .select('track_id')
                 .eq('user_id', user.id)
                 .gte('created_at', sevenDaysAgo);
 
-            if (likes) {
+            if (likeError) {
+                console.error('Failed to fetch likes for filtering:', {
+                    error: likeError,
+                    userId: user.id,
+                });
+            } else if (likes) {
                 excludedTrackIds.push(...likes.map(l => l.track_id));
             }
 
             // 重複除去
             excludedTrackIds = [...new Set(excludedTrackIds)];
+
+            // Truncate if exceeds max to prevent query string length issues
+            if (excludedTrackIds.length > MAX_EXCLUDE) {
+                console.debug(
+                    `Excluded IDs truncated from ${excludedTrackIds.length} to ${MAX_EXCLUDE}`,
+                    { userId: user.id }
+                );
+                excludedTrackIds = excludedTrackIds.slice(0, MAX_EXCLUDE);
+            }
         }
 
-        // プールから取得（余裕を持って多めに）
-        const fetchCount = count + excludedTrackIds.length + 20;
+        // プールから取得（小さなバッファのみ - 除外IDはデータベースでフィルタ済み）
+        const fetchCount = count + 20;
 
         let query = supabase
             .from('track_pool')
