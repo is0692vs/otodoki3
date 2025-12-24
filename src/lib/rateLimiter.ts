@@ -5,6 +5,22 @@ type Bucket = {
 
 const buckets = new Map<string, Bucket>();
 
+// TTL: 10分間アクセスがないエントリを削除
+const TTL_MS = 10 * 60 * 1000;
+const CLEANUP_INTERVAL_MS = 60 * 1000; // 1分ごとにクリーンアップ
+
+// スイーパー（古いエントリを定期削除）
+if (typeof setInterval !== 'undefined') {
+    setInterval(() => {
+        const now = Date.now();
+        for (const [key, bucket] of buckets.entries()) {
+            if (now - bucket.lastRefill > TTL_MS) {
+                buckets.delete(key);
+            }
+        }
+    }, CLEANUP_INTERVAL_MS);
+}
+
 /**
  * Simple token bucket rate limiter (in-memory).
  * NOTE: This is best-effort and not suitable for multi-instance deployments.

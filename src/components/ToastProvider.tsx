@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
 
 type Toast = {
   id: string;
@@ -15,21 +22,45 @@ const ToastContext = createContext<{
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const push = useCallback((t: Omit<Toast, "id">, ttl = 3000) => {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    const toast: Toast = { id, ...t };
-    setToasts((s) => [toast, ...s]);
-    if (ttl > 0) {
-      setTimeout(() => {
-        setToasts((s) => s.filter((x) => x.id !== id));
-      }, ttl);
-    }
-    return id;
-  }, []);
+  const timerRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const dismiss = useCallback((id: string) => {
+    const timerId = timerRefs.current.get(id);
+    if (timerId) {
+      clearTimeout(timerId);
+      timerRefs.current.delete(id);
+    }
     setToasts((s) => s.filter((t) => t.id !== id));
+  }, []);
+
+  const push = useCallback(
+    (t: Omit<Toast, "id">, ttl = 3000) => {
+      const id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+      const toast: Toast = { id, ...t };
+      setToasts((s) => [toast, ...s]);
+
+      if (ttl > 0) {
+        const timerId = setTimeout(() => {
+          dismiss(id);
+        }, ttl);
+        timerRefs.current.set(id, timerId);
+      }
+      return id;
+    },
+    [dismiss]
+  );
+
+  // クリーンアップ
+  useEffect(() => {
+    const currentTimers = timerRefs.current;
+    return () => {
+      currentTimers.forEach((timerId) => clearTimeout(timerId));
+      currentTimers.clear();
+    };
   }, []);
 
   return (

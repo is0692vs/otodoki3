@@ -11,6 +11,58 @@ import { useToast } from "./ToastProvider";
 
 type SwipeDirection = "left" | "right";
 
+const fetchWithTimeout = async (
+  input: RequestInfo,
+  init: RequestInit = {},
+  timeoutMs = 5000
+) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(input, { ...init, signal: controller.signal });
+    clearTimeout(timeout);
+    return res;
+  } catch (e) {
+    clearTimeout(timeout);
+    throw e;
+  }
+};
+
+const fetchWithRetry = async (
+  input: RequestInfo,
+  init: RequestInit = {},
+  attempts = 3,
+  timeoutMs = 5000,
+  baseDelay = 300
+) => {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetchWithTimeout(input, init, timeoutMs);
+      if (!res.ok) {
+        const text = await res.text().catch(() => "<no body>");
+        const err = new Error(`HTTP ${res.status}: ${text}`);
+        lastErr = err;
+        if (res.status >= 500 && i < attempts - 1) {
+          await new Promise((r) => setTimeout(r, baseDelay * Math.pow(2, i)));
+          continue;
+        }
+        throw err;
+      }
+      return res;
+    } catch (e) {
+      lastErr = e;
+      if (i < attempts - 1) {
+        const delay = baseDelay * Math.pow(2, i);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+      throw lastErr;
+    }
+  }
+  // throw lastErr; // 到達不能コードを削除
+};
+
 /**
  * トラックカードのスタックを管理して表示するコンポーネント。
  *
@@ -96,58 +148,6 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stack[0]?.type === "track" ? stack[0].track_id : stack[0]?.id]);
 
-  const fetchWithTimeout = async (
-    input: RequestInfo,
-    init: RequestInit = {},
-    timeoutMs = 5000
-  ) => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const res = await fetch(input, { ...init, signal: controller.signal });
-      clearTimeout(timeout);
-      return res;
-    } catch (e) {
-      clearTimeout(timeout);
-      throw e;
-    }
-  };
-
-  const fetchWithRetry = async (
-    input: RequestInfo,
-    init: RequestInit = {},
-    attempts = 3,
-    timeoutMs = 5000,
-    baseDelay = 300
-  ) => {
-    let lastErr: unknown;
-    for (let i = 0; i < attempts; i++) {
-      try {
-        const res = await fetchWithTimeout(input, init, timeoutMs);
-        if (!res.ok) {
-          const text = await res.text().catch(() => "<no body>");
-          const err = new Error(`HTTP ${res.status}: ${text}`);
-          lastErr = err;
-          if (res.status >= 500 && i < attempts - 1) {
-            await new Promise((r) => setTimeout(r, baseDelay * Math.pow(2, i)));
-            continue;
-          }
-          throw err;
-        }
-        return res;
-      } catch (e) {
-        lastErr = e;
-        if (i < attempts - 1) {
-          const delay = baseDelay * Math.pow(2, i);
-          await new Promise((r) => setTimeout(r, delay));
-          continue;
-        }
-        throw lastErr;
-      }
-    }
-    throw lastErr;
-  };
-
   const swipeTop = (direction: SwipeDirection, item: CardItem) => {
     // ユーザージェスチャー内で同期的に停止（自動再生ポリシー対策）
     stop();
@@ -191,6 +191,7 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
       console.log("Like", track.track_id);
       const id = String(track.track_id);
       (async () => {
+        setActionInProgress(true);
         try {
           const pending = toast.push(
             { type: "info", message: "いいねを保存しています..." },
@@ -217,6 +218,8 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
           toast.push({ type: "error", message: "いいねの保存に失敗しました" });
           // rollback: reinsert item at top
           setStack((prev) => [track, ...prev]);
+        } finally {
+          setActionInProgress(false);
         }
       })();
     } else {
@@ -379,12 +382,11 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
           type="button"
           onClick={handleDislikeClick}
           disabled={actionInProgress}
-          aria-disabled={actionInProgress}
-          className={`flex h-16 w-16 items-center justify-center rounded-full text-white shadow-lg transition-transform active:scale-95 ${
+          className={`flex h-16 w-16 items-center justify-center rounded-full bg-red-500 text-white shadow-lg transition-transform active:scale-95 ${
             actionInProgress
               ? "opacity-50 cursor-not-allowed"
               : "hover:scale-110"
-          } ${"bg-red-500"}`}
+          }`}
           aria-label="よくない"
         >
           <svg
@@ -405,12 +407,11 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
           type="button"
           onClick={handleLikeClick}
           disabled={actionInProgress}
-          aria-disabled={actionInProgress}
-          className={`flex h-16 w-16 items-center justify-center rounded-full text-white shadow-lg transition-transform active:scale-95 ${
+          className={`flex h-16 w-16 items-center justify-center rounded-full bg-green-500 text-white shadow-lg transition-transform active:scale-95 ${
             actionInProgress
               ? "opacity-50 cursor-not-allowed"
               : "hover:scale-110"
-          } ${"bg-green-500"}`}
+          }`}
           aria-label="いいね"
         >
           <svg

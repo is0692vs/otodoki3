@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rateLimiter';
+import { validateAndNormalizeTrackId } from '@/lib/validation';
 
 export async function POST(request: Request) {
     const supabase = await createClient();
@@ -11,27 +12,13 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { track_id } = body;
+    const validation = validateAndNormalizeTrackId(body);
 
-    if (track_id === undefined || track_id === null) {
-        return NextResponse.json({ error: 'track_id is required' }, { status: 400 });
+    if (!validation.success) {
+        return NextResponse.json({ error: validation.error }, { status: validation.status });
     }
 
-    // validate/normalize track_id (expect numeric bigint-like value)
-    let normalizedTrackId: string;
-    if (typeof track_id === 'number') {
-        if (!Number.isSafeInteger(track_id)) {
-            return NextResponse.json({ error: 'track_id must be a safe integer' }, { status: 400 });
-        }
-        normalizedTrackId = String(track_id);
-    } else if (typeof track_id === 'string') {
-        if (!/^\d+$/.test(track_id)) {
-            return NextResponse.json({ error: 'track_id must be a numeric string' }, { status: 400 });
-        }
-        normalizedTrackId = track_id;
-    } else {
-        return NextResponse.json({ error: 'track_id must be a number or numeric string' }, { status: 400 });
-    }
+    const normalizedTrackId = String(validation.trackId);
 
     // Rate limit by user id (fallback to ip if needed)
     const rlKey = `likes:${user.id}`;
@@ -48,7 +35,7 @@ export async function POST(request: Request) {
         .eq('track_id', normalizedTrackId);
 
     if (deleteError) {
-        console.error('Failed to remove existing dislike', { error: deleteError, user: user.id, track_id: normalizedTrackId });
+        console.error('Failed to remove existing dislike', { error: deleteError, userId: user.id, trackId: normalizedTrackId });
         // Do not proceed if delete fails - surface the error
         return NextResponse.json({ error: 'Failed to remove existing dislike' }, { status: 500 });
     }
@@ -62,7 +49,7 @@ export async function POST(request: Request) {
         );
 
     if (error) {
-        console.error('Like error:', error);
+        console.error('Like error:', { error, userId: user.id, trackId: normalizedTrackId });
         return NextResponse.json({ error: 'Failed to save like' }, { status: 500 });
     }
 
