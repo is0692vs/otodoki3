@@ -26,7 +26,30 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
   const hasUserInteractedRef = useRef(false);
 
   const handleRefill = useCallback((newTracks: CardItem[]) => {
-    setStack((prev) => [...prev, ...newTracks]);
+    setStack((prev) => {
+      // 既存のtrack_idを収集
+      const existingIds = new Set(
+        prev
+          .filter((item): item is Track => "track_id" in item)
+          .map((item) => item.track_id)
+      );
+
+      // 重複を除外
+      const uniqueNewTracks = newTracks.filter((track) => {
+        if ("track_id" in track) {
+          return !existingIds.has(track.track_id);
+        }
+        return true; // チュートリアルカードはそのまま通す
+      });
+
+      console.log(
+        `Added ${uniqueNewTracks.length} unique tracks (filtered ${
+          newTracks.length - uniqueNewTracks.length
+        } duplicates)`
+      );
+
+      return [...prev, ...uniqueNewTracks];
+    });
   }, []);
 
   const { isRefilling, error } = useAutoRefill(stack, handleRefill);
@@ -141,12 +164,18 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
         <AudioProgressBar progress={progress} />
       </div>
       {isRefilling && (
-        <div role="status" className="fixed bottom-4 right-4 rounded-full bg-black/80 px-4 py-2 text-sm text-white">
+        <div
+          role="status"
+          className="fixed bottom-4 right-4 rounded-full bg-black/80 px-4 py-2 text-sm text-white"
+        >
           楽曲を補充中...
         </div>
       )}
       {error && (
-        <div role="alert" className="fixed bottom-4 right-4 rounded-lg bg-red-500/90 px-4 py-2 text-sm text-white">
+        <div
+          role="alert"
+          className="fixed bottom-4 right-4 rounded-lg bg-red-500/90 px-4 py-2 text-sm text-white"
+        >
           補充に失敗しました
         </div>
       )}
