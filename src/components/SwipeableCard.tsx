@@ -10,7 +10,7 @@ import {
   AnimatePresence,
 } from "framer-motion";
 import { flushSync } from "react-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import type { CardItem, Track } from "../types/track-pool";
 import { TrackCard } from "./TrackCard";
 import { TutorialCard } from "./TutorialCard";
@@ -39,6 +39,11 @@ const SNAP_BACK_SPRING = {
   damping: 30,
 } as const;
 
+export interface SwipeableCardRef {
+  swipeLeft: () => void;
+  swipeRight: () => void;
+}
+
 interface SwipeableCardProps {
   item: CardItem;
   isTop: boolean;
@@ -48,14 +53,18 @@ interface SwipeableCardProps {
   onPlayPause?: (e?: React.MouseEvent) => void;
 }
 
-export function SwipeableCard({
-  item,
-  isTop,
-  onSwipe,
-  index,
-  isPlaying,
-  onPlayPause,
-}: SwipeableCardProps) {
+export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
+  function SwipeableCard(
+    {
+      item,
+      isTop,
+      onSwipe,
+      index,
+      isPlaying,
+      onPlayPause,
+    }: SwipeableCardProps,
+    ref
+  ) {
   const [exitX, setExitX] = useState<number | null>(null);
   const [showReaction, setShowReaction] = useState<"like" | "skip" | null>(
     null
@@ -70,6 +79,52 @@ export function SwipeableCard({
       }
     };
   }, []);
+
+  // 外部からスワイプをトリガーするためのAPI
+  useImperativeHandle(ref, () => ({
+    swipeLeft: () => {
+      if (!isTop) return;
+      
+      // スワイプアニメーションを実行
+      flushSync(() => {
+        setExitX(-EXIT_X_OFFSET_PX);
+        setShowReaction("skip");
+      });
+      
+      // x座標をアニメーション
+      animate(x, -EXIT_X_OFFSET_PX, {
+        duration: EXIT_DURATION_SEC,
+        ease: "easeOut",
+      });
+      
+      // アニメーション完了後にコールバック呼び出し
+      swipeTimeoutRef.current = window.setTimeout(() => {
+        onSwipe("left", item);
+        setShowReaction(null);
+      }, EXIT_DURATION_SEC * 1000);
+    },
+    swipeRight: () => {
+      if (!isTop) return;
+      
+      // スワイプアニメーションを実行
+      flushSync(() => {
+        setExitX(EXIT_X_OFFSET_PX);
+        setShowReaction("like");
+      });
+      
+      // x座標をアニメーション
+      animate(x, EXIT_X_OFFSET_PX, {
+        duration: EXIT_DURATION_SEC,
+        ease: "easeOut",
+      });
+      
+      // アニメーション完了後にコールバック呼び出し
+      swipeTimeoutRef.current = window.setTimeout(() => {
+        onSwipe("right", item);
+        setShowReaction(null);
+      }, EXIT_DURATION_SEC * 1000);
+    },
+  }), [isTop, item, onSwipe, x]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isTop) return;
@@ -281,4 +336,4 @@ export function SwipeableCard({
       )}
     </motion.div>
   );
-}
+});

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Track, CardItem } from "../types/track-pool";
 import { useAudioPlayer } from "../hooks/useAudioPlayer";
 import { useAutoRefill } from "../hooks/useAutoRefill";
-import { SwipeableCard } from "./SwipeableCard";
+import { SwipeableCard, SwipeableCardRef } from "./SwipeableCard";
 import { AudioProgressBar } from "./AudioProgressBar";
 
 type SwipeDirection = "left" | "right";
@@ -24,6 +24,7 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
   const [stack, setStack] = useState<CardItem[]>(initialStack);
   const { play, stop, pause, resume, isPlaying, progress } = useAudioPlayer();
   const hasUserInteractedRef = useRef(false);
+  const topCardRef = useRef<SwipeableCardRef>(null);
 
   const handleRefill = useCallback((newTracks: CardItem[]) => {
     setStack((prev) => {
@@ -150,6 +151,16 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
     }
   };
 
+  const handleDislikeClick = () => {
+    hasUserInteractedRef.current = true;
+    topCardRef.current?.swipeLeft();
+  };
+
+  const handleLikeClick = () => {
+    hasUserInteractedRef.current = true;
+    topCardRef.current?.swipeRight();
+  };
+
   if (stack.length === 0) {
     return (
       <div className="flex h-[70vh] max-h-140 w-[92vw] max-w-sm items-center justify-center rounded-3xl border border-black/8 bg-background text-foreground dark:border-white/15">
@@ -190,27 +201,71 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
           楽曲を補充中...
         </div>
       )}
-      <AnimatePresence initial={false}>
-        {stack.map((item, index) => {
-          const isTop = index === 0;
 
-          return (
-            <SwipeableCard
-              key={
-                "type" in item && item.type === "tutorial"
-                  ? item.id
-                  : item.track_id
-              }
-              item={item}
-              isTop={isTop}
-              index={index}
-              onSwipe={swipeTop}
-              isPlaying={isTop ? isPlaying : undefined}
-              onPlayPause={isTop ? handlePlayPauseClick : undefined}
+      {/* カードスタック */}
+      <div className="relative h-full">
+        <AnimatePresence initial={false}>
+          {stack.map((item, index) => {
+            const isTop = index === 0;
+
+            return (
+              <SwipeableCard
+                key={
+                  "type" in item && item.type === "tutorial"
+                    ? item.id
+                    : item.track_id
+                }
+                ref={isTop ? topCardRef : null}
+                item={item}
+                isTop={isTop}
+                index={index}
+                onSwipe={swipeTop}
+                isPlaying={isTop ? isPlaying : undefined}
+                onPlayPause={isTop ? handlePlayPauseClick : undefined}
+              />
+            );
+          })}
+        </AnimatePresence>
+      </div>
+
+      {/* Like/Dislikeボタン */}
+      <div className="absolute bottom-8 left-0 right-0 flex items-center justify-center gap-8 z-300">
+        <button
+          type="button"
+          onClick={handleDislikeClick}
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-95"
+          aria-label="よくない"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-8 w-8"
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z"
+              clipRule="evenodd"
             />
-          );
-        })}
-      </AnimatePresence>
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleLikeClick}
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500 text-white shadow-lg transition-transform hover:scale-110 active:scale-95"
+          aria-label="いいね"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-8 w-8"
+          >
+            <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }
