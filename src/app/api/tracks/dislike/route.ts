@@ -35,20 +35,20 @@ export async function POST(request: Request) {
 
     // Rate limit check
     const rlKey = `dislikes:${user.id}`;
-    const rl = rateLimit(rlKey, 30, 60_000);
+    const rl = rateLimit(rlKey, 120, 60_000);
     if (!rl.allowed) {
         return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
     // Likeがあれば削除 (check error)
-    const delRes = await supabase
+    const { error: deleteError } = await supabase
         .from('likes')
         .delete()
         .eq('user_id', user.id)
         .eq('track_id', normalizedTrackId);
 
-    if ((delRes as any).error) {
-        console.error('Failed to remove existing like', { error: (delRes as any).error, user: user.id, track_id: normalizedTrackId });
+    if (deleteError) {
+        console.error('Failed to remove existing like', { error: deleteError, user: user.id, track_id: normalizedTrackId });
         return NextResponse.json({ error: 'Failed to remove existing like' }, { status: 500 });
     }
 
