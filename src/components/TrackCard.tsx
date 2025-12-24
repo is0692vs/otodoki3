@@ -36,14 +36,17 @@ export function TrackCard({
             src={artworkUrl}
             alt=""
             fill
-            className="object-cover select-none"
-            style={{ WebkitUserDrag: "none" }}
+            className="object-cover select-none [-webkit-user-drag:none]"
             draggable={false}
             onDragStart={(e) => e.preventDefault()}
             unoptimized
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center" draggable={false} onDragStart={(e) => e.preventDefault()}>
+          <div
+            className="flex h-full w-full items-center justify-center"
+            draggable={false}
+            onDragStart={(e) => e.preventDefault()}
+          >
             <span className="text-4xl opacity-20">🎵</span>
           </div>
         )}
@@ -60,7 +63,7 @@ export function TrackCard({
             <Image
               src="/apple-music-badge.svg"
               alt="Apple Music"
-              className="h-5 w-auto select-none"
+              className="h-5 w-auto select-none [-webkit-user-drag:none]"
               width={100}
               height={22}
               draggable={false}

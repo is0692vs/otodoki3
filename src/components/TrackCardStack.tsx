@@ -175,7 +175,9 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
     return (
       <div className="flex flex-col items-center gap-8">
         <div className="flex h-[min(85vw,340px)] w-[min(85vw,340px)] items-center justify-center rounded-3xl border border-black/8 bg-background text-foreground dark:border-white/15">
-          <p className="text-sm opacity-80">今日のディスカバリーはここまで 🎵</p>
+          <p className="text-sm opacity-80">
+            今日のディスカバリーはここまで 🎵
+          </p>
         </div>
       </div>
     );
@@ -185,66 +187,68 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
     <div className="relative flex flex-col items-center gap-8">
       {/* カードスタック部分 */}
       <div className="relative h-[min(110vw,440px)] w-[min(85vw,340px)]">
-      {/* エラー表示を優先 */}
-      {error && (
-        <div
-          role="alert"
-          className="fixed bottom-4 right-4 flex items-center gap-2 rounded-lg bg-red-500/90 px-4 py-2 text-sm text-white"
-        >
-          補充に失敗しました
-          <button
-            type="button"
-            onClick={() => clearError()}
-            className="ml-2 text-white/80 hover:text-white"
-            aria-label="エラーを閉じる"
+        {/* エラー表示を優先 */}
+        {error && (
+          <div
+            role="alert"
+            className="fixed bottom-4 right-4 flex items-center gap-2 rounded-lg bg-red-500/90 px-4 py-2 text-sm text-white"
           >
-            ✕
-          </button>
+            補充に失敗しました
+            <button
+              type="button"
+              onClick={() => clearError()}
+              className="ml-2 text-white/80 hover:text-white"
+              aria-label="エラーを閉じる"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* エラーがない時のみローディング表示 */}
+        {!error && isRefilling && (
+          <div
+            role="status"
+            className="fixed bottom-4 right-4 rounded-full bg-black/80 px-4 py-2 text-sm text-white"
+          >
+            楽曲を補充中...
+          </div>
+        )}
+
+        {/* カードスタック */}
+        <div className="relative h-full">
+          <AnimatePresence initial={false}>
+            {stack.map((item, index) => {
+              const isTop = index === 0;
+
+              const isTrack = !("type" in item && item.type === "tutorial");
+
+              return (
+                <SwipeableCard
+                  key={
+                    "type" in item && item.type === "tutorial"
+                      ? item.id
+                      : item.track_id
+                  }
+                  ref={isTop ? topCardRef : null}
+                  item={item}
+                  isTop={isTop}
+                  index={index}
+                  onSwipe={swipeTop}
+                  isPlaying={isTop && isTrack ? isPlaying : undefined}
+                  onPlayPause={
+                    isTop && isTrack ? handlePlayPauseClick : undefined
+                  }
+                  progress={isTop && isTrack ? progress : undefined}
+                />
+              );
+            })}
+          </AnimatePresence>
         </div>
-      )}
-
-      {/* エラーがない時のみローディング表示 */}
-      {!error && isRefilling && (
-        <div
-          role="status"
-          className="fixed bottom-4 right-4 rounded-full bg-black/80 px-4 py-2 text-sm text-white"
-        >
-          楽曲を補充中...
-        </div>
-      )}
-
-      {/* カードスタック */}
-      <div className="relative h-full">
-        <AnimatePresence initial={false}>
-          {stack.map((item, index) => {
-            const isTop = index === 0;
-
-            const isTrack = !("type" in item && item.type === "tutorial");
-
-            return (
-              <SwipeableCard
-                key={
-                  "type" in item && item.type === "tutorial"
-                    ? item.id
-                    : item.track_id
-                }
-                ref={isTop ? topCardRef : null}
-                item={item}
-                isTop={isTop}
-                index={index}
-                onSwipe={swipeTop}
-                isPlaying={isTop && isTrack ? isPlaying : undefined}
-                onPlayPause={isTop && isTrack ? handlePlayPauseClick : undefined}
-                progress={isTop && isTrack ? progress : undefined}
-              />
-            );
-          })}
-        </AnimatePresence>
       </div>
-    </div>
 
-    {/* Like/Dislikeボタン - カードの外側（下）に配置 */}
-    <div className="flex items-center justify-center gap-8">
+      {/* Like/Dislikeボタン - カードの外側（下）に配置 */}
+      <div className="flex items-center justify-center gap-8">
         <button
           type="button"
           onClick={handleDislikeClick}
