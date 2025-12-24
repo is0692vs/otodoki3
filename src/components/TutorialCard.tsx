@@ -11,7 +11,7 @@ export function TutorialCard() {
         <div className="mb-8">
           <div className="text-4xl">🎵</div>
           <h2 className="mt-3 text-2xl font-bold">ディスカバリー</h2>
-          <p className="mt-1 text-sm opacity-70">新しい音楽との出会い</p>
+          <p className="mt-1 text-sm opacity-90">新しい音楽との出会い</p>
         </div>
 
         {/* スワイプガイド */}
@@ -20,7 +20,7 @@ export function TutorialCard() {
             <span className="text-2xl">👈</span>
             <div className="text-left">
               <p className="font-semibold">左スワイプ</p>
-              <p className="text-sm opacity-75">スキップ</p>
+              <p className="text-sm opacity-90">スキップ</p>
             </div>
           </div>
 
@@ -28,7 +28,7 @@ export function TutorialCard() {
             <span className="text-2xl">👉</span>
             <div className="text-left">
               <p className="font-semibold">右スワイプ</p>
-              <p className="text-sm opacity-75">Like</p>
+              <p className="text-sm opacity-90">Like</p>
             </div>
           </div>
         </div>
@@ -36,7 +36,7 @@ export function TutorialCard() {
         {/* CTA */}
         <div className="mt-10">
           <p className="text-lg font-semibold">スワイプして始めよう！</p>
-          <p className="mt-2 text-sm opacity-70">→ または ←</p>
+          <p className="mt-2 text-sm opacity-90">→ または ←</p>
         </div>
       </div>
     </article>

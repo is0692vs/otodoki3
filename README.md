@@ -35,6 +35,26 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## Supabase Authentication
+
+The app now relies on Supabase Auth to protect the discovery experience and keep the beta invitation-only.
+
+- `/login` renders a combined Google + email/password login form that issues OAuth redirects to `/auth/callback`.
+- `/auth/callback` exchanges Supabase codes for sessions and redirects users back to the requested path.
+- `/waitlist` shows a holding page for accounts that are not on the allowed-email list.
+- `src/middleware.ts` uses `@supabase/ssr` to guard `/`, redirect unauthenticated users to `/login`, and send everyone without an allowed email to `/waitlist`.
+- A logout button on the home screen links back to `/login` so testers can switch accounts.
+
+Required environment variables for authentication:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
+ALLOWED_EMAILS=user@example.com
+```
+
+`ALLOWED_EMAILS` should be a comma-separated list of addresses allowed to sign in while the closed beta is running.
+
 ## テスト
 
 このプロジェクトは Jest を使用してテストを実行します。
@@ -62,7 +82,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 TRACK_POOL_MAX_SIZE=10
 ```
 
-詳細は [src/lib/__tests__/README.md](src/lib/__tests__/README.md) を参照してください。
+詳細は [src/lib/**tests**/README.md](src/lib/__tests__/README.md) を参照してください。
 
 ### テストカバレッジ目標
 
@@ -70,4 +90,5 @@ TRACK_POOL_MAX_SIZE=10
 - 重要な関数: 100%
 
 現在のカバレッジ:
+
 - `src/lib/refill-methods/chart.ts`: 93.47% (statements), 95.34% (lines)
