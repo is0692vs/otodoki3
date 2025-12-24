@@ -11,6 +11,17 @@ import { AudioProgressBar } from "./AudioProgressBar";
 
 type SwipeDirection = "left" | "right";
 
+/**
+ * トラックカードのスタックを管理して表示するコンポーネント。
+ *
+ * スタックはチュートリアルカードを先頭にしたカード群（トラックカードを含む）を保持し、
+ * 最上位カードのプレビュー再生、スワイプによる「いいね/スキップ」操作、補充（refill）と重複除外、
+ * 再生進捗・補充中・エラー表示、ならびに画面下部のいいね/よくないボタンを提供します。
+ * 自動再生はユーザーが初回インタラクションを行った後にのみ開始されます。
+ *
+ * @param tracks - 表示するトラックの配列（各要素は Track）。チュートリアルカードとともに初期スタックを構成します。
+ * @returns コンポーネントのレンダリング結果（React 要素）
+ */
 export function TrackCardStack({ tracks }: { tracks: Track[] }) {
   // ライブラリ選定理由:
   // - react-tinder-card は peerDependencies が react@^16.8 || ^17 || ^18 までで、react@19 と依存解決が衝突する可能性が高い
