@@ -57,11 +57,20 @@ interface SwipeableCardProps {
   index: number;
   isPlaying?: boolean;
   onPlayPause?: (e?: React.MouseEvent) => void;
+  progress?: number;
 }
 
 export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
   function SwipeableCard(
-    { item, isTop, onSwipe, index, isPlaying, onPlayPause }: SwipeableCardProps,
+    {
+      item,
+      isTop,
+      onSwipe,
+      index,
+      isPlaying,
+      onPlayPause,
+      progress,
+    }: SwipeableCardProps,
     ref
   ) {
     const [exitX, setExitX] = useState<number | null>(null);
@@ -299,7 +308,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         {item.type === "tutorial" ? (
           <TutorialCard />
         ) : (
-          <TrackCard track={item} />
+          <TrackCard track={item} progress={progress} />
         )}
 
         {/* 再生/停止ボタン (横幅中央) */}
@@ -307,7 +316,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
           <button
             type="button"
             onClick={(e) => onPlayPause(e)}
-            className="absolute inset-y-0 left-1/2 -translate-x-1/2 flex items-center justify-center z-10"
+            className="absolute top-2/3 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-10"
             aria-label={isPlaying ? "一時停止" : "再生"}
           >
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-all hover:bg-black/70 active:scale-95">
