@@ -1,5 +1,5 @@
+import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 
 /**
  * 配列の要素をランダムな順序に並べ替えた新しい配列を作成する。
@@ -18,12 +18,15 @@ function shuffleArray<T>(array: T[]): T[] {
 
 /**
  * トラックプールからランダムに選んだトラックを返す API エンドポイントを処理する。
+ * 認証済みユーザーの場合は、履歴に基づいて自動的にフィルタリングを行う。
  *
  * @param request - Next.js のリクエスト。クエリパラメータ `count` を受け取り、返すトラック数を指定します（デフォルト 10、範囲 1〜100 に制限）。
  * @returns 成功時は `{ success: true, tracks: [...] }` を含む JSON、失敗時は `{ success: false, error: '...' }` を含む JSON
  */
 export async function GET(request: NextRequest) {
     try {
+        const supabase = await createClient();
+
         // Parse count parameter (default: 10, max: 100)
         const { searchParams } = new URL(request.url);
         const countParam = searchParams.get('count');
@@ -33,16 +36,60 @@ export async function GET(request: NextRequest) {
             100
         );
 
-        // Fetch count * 3 tracks to improve shuffle quality
-        const fetchCount = count * 3;
-        const { data: tracks, error } = await supabase
+        // 認証チェック（オプショナル - 未認証でも動作）
+        const { data: { user } } = await supabase.auth.getUser();
+
+        let excludedTrackIds: number[] = [];
+
+        if (user) {
+            // 1. Dislike: 直近30日
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+            const { data: dislikes } = await supabase
+                .from('dislikes')
+                .select('track_id')
+                .eq('user_id', user.id)
+                .gte('created_at', thirtyDaysAgo);
+
+            if (dislikes) {
+                excludedTrackIds.push(...dislikes.map(d => d.track_id));
+            }
+
+            // 2. Like: 直近7日
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+            const { data: likes } = await supabase
+                .from('likes')
+                .select('track_id')
+                .eq('user_id', user.id)
+                .gte('created_at', sevenDaysAgo);
+
+            if (likes) {
+                excludedTrackIds.push(...likes.map(l => l.track_id));
+            }
+
+            // 重複除去
+            excludedTrackIds = [...new Set(excludedTrackIds)];
+        }
+
+        // プールから取得（余裕を持って多めに）
+        const fetchCount = count + excludedTrackIds.length + 20;
+
+        let query = supabase
             .from('track_pool')
             .select('*')
-            .order('fetched_at', { ascending: false })
             .limit(fetchCount);
 
+        // 除外リストがある場合はフィルタリング
+        if (excludedTrackIds.length > 0) {
+            query = query.not('track_id', 'in', `(${excludedTrackIds.join(',')})`);
+        }
+
+        const { data: tracks, error } = await query;
+
         if (error) {
-            console.error('Failed to fetch tracks from pool:', error);
+            console.error('Failed to fetch tracks from pool:', {
+                error,
+                userId: user?.id,
+            });
             return NextResponse.json(
                 { success: false, error: 'Failed to fetch tracks' },
                 { status: 500 }
