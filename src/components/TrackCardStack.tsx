@@ -93,8 +93,8 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
     });
   };
 
-  const handlePlayPauseClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handlePlayPauseClick = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     // 初回インタラクション時のフラグをON
     hasUserInteractedRef.current = true;
 
