@@ -6,6 +6,7 @@ import Link from "next/link";
 
 type Track = {
   track_id: string;
+  type: "track";
   track_name: string;
   artist_name: string;
   artwork_url: string;

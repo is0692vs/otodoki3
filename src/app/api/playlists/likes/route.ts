@@ -2,14 +2,14 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 type LikeWithTrack = {
-    track_id: number;
-    created_at: string;
-    track_pool: {
-        track_name: string;
-        artist_name: string;
-        artwork_url: string;
-        preview_url: string;
-    } | null;
+    track_id: any;
+    created_at: any;
+    track_pool: Array<{
+        track_name: any;
+        artist_name: any;
+        artwork_url: any;
+        preview_url: any;
+    }> | null;
 };
 
 export async function GET() {
@@ -42,14 +42,15 @@ export async function GET() {
     }
 
     // null track_pool を除外してフラット化
-    const tracks = (data as LikeWithTrack[])
-        .filter(item => item.track_pool !== null)
+    const tracks = (data as unknown as LikeWithTrack[])
+        .filter(item => item.track_pool !== null && item.track_pool!.length > 0)
         .map(item => ({
-            track_id: item.track_id,
-            track_name: item.track_pool!.track_name,
-            artist_name: item.track_pool!.artist_name,
-            artwork_url: item.track_pool!.artwork_url,
-            preview_url: item.track_pool!.preview_url,
+            track_id: String(item.track_id),
+            type: 'track' as const,
+            track_name: item.track_pool![0].track_name,
+            artist_name: item.track_pool![0].artist_name,
+            artwork_url: item.track_pool![0].artwork_url,
+            preview_url: item.track_pool![0].preview_url,
             created_at: item.created_at,
         }));
 

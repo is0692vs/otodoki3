@@ -4,7 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { TrackCardStack } from "@/components/TrackCardStack";
 
 type Track = {
-  track_id: number;
+  track_id: string;
+  type: "track";
   track_name: string;
   artist_name: string;
   artwork_url: string;
@@ -31,7 +32,7 @@ export default function PlaylistSwipePage() {
           return;
         }
         const { tracks } = await res.json();
-        setTracks(tracks.map((t: Track) => ({ ...t, type: "track" as const })));
+        setTracks(tracks);
       } catch (err) {
         console.error("Network error:", err);
       } finally {
