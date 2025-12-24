@@ -229,7 +229,7 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
       </div>
 
       {/* Like/Dislikeボタン */}
-      <div className="absolute bottom-8 left-0 right-0 flex items-center justify-center gap-8 z-300">
+      <div className="absolute bottom-8 left-0 right-0 flex items-center justify-center gap-8 z-[300]">
         <button
           type="button"
           onClick={handleDislikeClick}
