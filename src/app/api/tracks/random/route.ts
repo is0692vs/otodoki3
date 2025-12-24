@@ -16,7 +16,9 @@ function shuffleArray<T>(array: T[]): T[] {
     return shuffled;
 }
 
-// Maximum number of excluded IDs to prevent query string length issues
+// Constants for user activity filtering
+const DISLIKE_EXCLUDE_DAYS = 30;
+const LIKE_EXCLUDE_DAYS = 7;
 const MAX_EXCLUDE = 1000;
 
 /**
@@ -40,18 +42,39 @@ export async function GET(request: NextRequest) {
         );
 
         // 認証チェック（オプショナル - 未認証でも動作）
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError) {
+            console.error('Failed to fetch authenticated user:', authError);
+        }
+        const user = authData?.user ?? null;
 
         let excludedTrackIds: number[] = [];
 
         if (user) {
-            // 1. Dislike: 直近30日
-            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-            const { data: dislikes, error: dislikeError } = await supabase
-                .from('dislikes')
-                .select('track_id')
-                .eq('user_id', user.id)
-                .gte('created_at', thirtyDaysAgo);
+            // Calculate date thresholds using constants
+            const thirtyDaysAgo = new Date(
+                Date.now() - DISLIKE_EXCLUDE_DAYS * 24 * 60 * 60 * 1000
+            ).toISOString();
+            const sevenDaysAgo = new Date(
+                Date.now() - LIKE_EXCLUDE_DAYS * 24 * 60 * 60 * 1000
+            ).toISOString();
+
+            // Fetch dislikes and likes in parallel for better performance
+            const [
+                { data: dislikes, error: dislikeError },
+                { data: likes, error: likeError }
+            ] = await Promise.all([
+                supabase
+                    .from('dislikes')
+                    .select('track_id')
+                    .eq('user_id', user.id)
+                    .gte('created_at', thirtyDaysAgo),
+                supabase
+                    .from('likes')
+                    .select('track_id')
+                    .eq('user_id', user.id)
+                    .gte('created_at', sevenDaysAgo),
+            ]);
 
             if (dislikeError) {
                 console.error('Failed to fetch dislikes for filtering:', {
@@ -61,14 +84,6 @@ export async function GET(request: NextRequest) {
             } else if (dislikes) {
                 excludedTrackIds.push(...dislikes.map(d => d.track_id));
             }
-
-            // 2. Like: 直近7日
-            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-            const { data: likes, error: likeError } = await supabase
-                .from('likes')
-                .select('track_id')
-                .eq('user_id', user.id)
-                .gte('created_at', sevenDaysAgo);
 
             if (likeError) {
                 console.error('Failed to fetch likes for filtering:', {
@@ -95,6 +110,8 @@ export async function GET(request: NextRequest) {
         // プールから取得（小さなバッファのみ - 除外IDはデータベースでフィルタ済み）
         const fetchCount = count + 20;
 
+        // Note: Sorting by fetched_at is omitted for better performance.
+        // Results are shuffled client-side anyway, so DB-level sorting is unnecessary.
         let query = supabase
             .from('track_pool')
             .select('*')
