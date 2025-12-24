@@ -220,8 +220,7 @@ export function TrackCardStack({ tracks }: { tracks: Track[] }) {
           <AnimatePresence initial={false}>
             {stack.map((item, index) => {
               const isTop = index === 0;
-
-              const isTrack = !("type" in item && item.type === "tutorial");
+              const isTrack = item.type === "track";
 
               return (
                 <SwipeableCard

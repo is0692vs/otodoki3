@@ -13,13 +13,12 @@ function isValidArtworkUrl(url: string | undefined): url is string {
   }
 }
 
-export function TrackCard({
-  track,
-  progress,
-}: {
+interface TrackCardProps {
   track: Track;
   progress?: number;
-}) {
+}
+
+export function TrackCard({ track, progress }: TrackCardProps) {
   const artworkUrl = isValidArtworkUrl(track.artwork_url)
     ? track.artwork_url.trim()
     : undefined;
@@ -34,7 +33,7 @@ export function TrackCard({
         {artworkUrl ? (
           <Image
             src={artworkUrl}
-            alt=""
+            alt={`${track.track_name} - ${track.artist_name}`}
             fill
             className="object-cover select-none [-webkit-user-drag:none]"
             draggable={false}
@@ -44,12 +43,13 @@ export function TrackCard({
         ) : (
           <div
             className="flex h-full w-full items-center justify-center"
+            role="presentation"
             draggable={false}
             onDragStart={(e) => e.preventDefault()}
           >
             <span className="text-4xl opacity-20">🎵</span>
           </div>
-        )}
+        )}}
 
         {/* Apple Musicボタン (画像の上にオーバーレイ) */}
         {track.track_view_url ? (
