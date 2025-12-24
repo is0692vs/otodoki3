@@ -5,41 +5,56 @@ const USER_AGENT = "otodoki3/1.0 (Supabase Edge Function)";
 const TIMEOUT_MS = 10000;
 
 interface AppleRssTrack {
-  id: string;
-  name: string;
-  artistName: string;
-  collectionName?: string;
-  url: string;
-  artworkUrl100?: string;
-  genres?: { name: string }[];
-  releaseDate?: string;
+    id: string;
+    name: string;
+    artistName: string;
+    collectionName?: string;
+    url: string;
+    artworkUrl100?: string;
+    genres?: { name: string }[];
+    releaseDate?: string;
 }
 
 interface TrackPoolEntry {
-  track_id: string;
-  track_name: string;
-  artist_name: string;
-  collection_name: string | null;
-  preview_url: string;
-  artwork_url: string | null;
-  track_view_url: string | null;
-  genre: string | null;
-  release_date: string | null;
-  metadata: {
-    source: string;
-    fetched_from: string;
-    refilled_at: string;
-  };
-  fetched_at: string;
+    track_id: string;
+    track_name: string;
+    artist_name: string;
+    collection_name: string | null;
+    preview_url: string;
+    artwork_url: string | null;
+    track_view_url: string | null;
+    genre: string | null;
+    release_date: string | null;
+    metadata: {
+        source: string;
+        fetched_from: string;
+        refilled_at: string;
+    };
+    fetched_at: string;
 }
 
 Deno.serve(async (req: Request) => {
     const startTime = Date.now();
 
-    // Authorization check - verify Bearer token against service role key
+    // Authorization check - verify Bearer token against CRON_AUTH_KEY
     const authHeader = req.headers.get('Authorization');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    if (!serviceRoleKey || authHeader !== `Bearer ${serviceRoleKey}`) {
+    const cronAuthKey = Deno.env.get('CRON_AUTH_KEY');
+    const expectedAuth = cronAuthKey ? `Bearer ${cronAuthKey}` : '';
+    const encoder = new TextEncoder();
+    const authBytes = encoder.encode(authHeader || '');
+    const expectedBytes = encoder.encode(expectedAuth);
+
+    // 長さが異なる場合や CRON_AUTH_KEY 未設定の場合は即座に拒否
+    if (!cronAuthKey || authBytes.length !== expectedBytes.length) {
+        console.error('Unauthorized request');
+        return new Response(
+            JSON.stringify({ success: false, error: 'Unauthorized' }),
+            { status: 401, headers: { 'Content-Type': 'application/json' } }
+        );
+    }
+
+    // 定数時間比較でタイミング攻撃を防止
+    if (!crypto.subtle.timingSafeEqual(authBytes, expectedBytes)) {
         console.error('Unauthorized request');
         return new Response(
             JSON.stringify({ success: false, error: 'Unauthorized' }),
