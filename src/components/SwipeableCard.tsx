@@ -43,6 +43,8 @@ interface SwipeableCardProps {
   isTop: boolean;
   onSwipe: (direction: "left" | "right", item: CardItem) => void;
   index: number;
+  isPlaying?: boolean;
+  onPlayPause?: () => void;
 }
 
 export function SwipeableCard({
@@ -50,12 +52,23 @@ export function SwipeableCard({
   isTop,
   onSwipe,
   index,
+  isPlaying,
+  onPlayPause,
 }: SwipeableCardProps) {
   const [exitX, setExitX] = useState<number | null>(null);
   const [showReaction, setShowReaction] = useState<"like" | "skip" | null>(
     null
   );
   const x = useMotionValue(0);
+  const swipeTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (swipeTimeoutRef.current !== null) {
+        clearTimeout(swipeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isTop) return;
@@ -65,16 +78,18 @@ export function SwipeableCard({
         setExitX(-EXIT_X_OFFSET_PX);
         setShowReaction("skip");
       });
-      setTimeout(() => {
+      swipeTimeoutRef.current = window.setTimeout(() => {
         onSwipe("left", item);
+        setShowReaction(null);
       }, EXIT_DURATION_SEC * 1000);
     } else if (e.key === "ArrowRight") {
       flushSync(() => {
         setExitX(EXIT_X_OFFSET_PX);
         setShowReaction("like");
       });
-      setTimeout(() => {
+      swipeTimeoutRef.current = window.setTimeout(() => {
         onSwipe("right", item);
+        setShowReaction(null);
       }, EXIT_DURATION_SEC * 1000);
     }
   };
@@ -115,16 +130,18 @@ export function SwipeableCard({
         setShowReaction("like");
       });
       // アニメーション終了後にonSwipeを呼ぶ
-      setTimeout(() => {
+      swipeTimeoutRef.current = window.setTimeout(() => {
         onSwipe("right", item);
+        setShowReaction(null);
       }, EXIT_DURATION_SEC * 1000);
     } else if (swipedLeft) {
       flushSync(() => {
         setExitX(-EXIT_X_OFFSET_PX);
         setShowReaction("skip");
       });
-      setTimeout(() => {
+      swipeTimeoutRef.current = window.setTimeout(() => {
         onSwipe("left", item);
+        setShowReaction(null);
       }, EXIT_DURATION_SEC * 1000);
     } else {
       animate(x, 0, SNAP_BACK_SPRING);
@@ -132,7 +149,7 @@ export function SwipeableCard({
   };
 
   return (
-    <motion.button
+    <motion.div
       className="absolute inset-0 border-none bg-transparent p-0"
       style={{
         zIndex: 100 - index, // Simple zIndex stack
@@ -179,21 +196,27 @@ export function SwipeableCard({
               {showReaction === "like" ? (
                 // いいねアイコン
                 <svg
+                  aria-label="いいね"
+                  role="img"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   className="h-14 w-14 text-red-500"
                 >
+                  <title>いいね</title>
                   <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
                 </svg>
               ) : (
                 // スキップアイコン
                 <svg
+                  aria-label="よくない"
+                  role="img"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   className="h-14 w-14 text-gray-400"
                 >
+                  <title>よくない</title>
                   <path
                     fillRule="evenodd"
                     d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z"
@@ -207,6 +230,54 @@ export function SwipeableCard({
       </AnimatePresence>
 
       {item.type === "tutorial" ? <TutorialCard /> : <TrackCard track={item} />}
-    </motion.button>
+
+      {/* 再生/停止ボタン (横幅中央) */}
+      {isTop && onPlayPause && (
+        <button
+          type="button"
+          onClick={onPlayPause}
+          className="absolute inset-y-0 left-1/2 -translate-x-1/2 flex items-center justify-center z-10"
+          aria-label={isPlaying ? "一時停止" : "再生"}
+        >
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-all hover:bg-black/70 active:scale-95">
+            {isPlaying ? (
+              // 停止アイコン
+              <svg
+                aria-label="一時停止"
+                role="img"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-8 w-8"
+              >
+                <title>一時停止</title>
+                <path
+                  fillRule="evenodd"
+                  d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0A.75.75 0 0115 4.5h1.5a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H15a.75.75 0 01-.75-.75V5.25z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            ) : (
+              // 再生アイコン
+              <svg
+                aria-label="再生"
+                role="img"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-8 w-8"
+              >
+                <title>再生</title>
+                <path
+                  fillRule="evenodd"
+                  d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            )}
+          </div>
+        </button>
+      )}
+    </motion.div>
   );
 }
