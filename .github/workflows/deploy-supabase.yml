@@ -19,20 +19,20 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Setup Supabase CLI with retry
         uses: supabase/setup-cli@v1
         with:
           version: latest
         continue-on-error: true
         id: setup-supabase-1
-      
+
       - name: Retry Supabase CLI setup if needed
         if: steps.setup-supabase-1.outcome == 'failure'
         uses: supabase/setup-cli@v1
         with:
           version: latest
-      
+
       - name: Deploy to Test
         run: |
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
@@ -47,20 +47,20 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Setup Supabase CLI with retry
         uses: supabase/setup-cli@v1
         with:
           version: latest
         continue-on-error: true
         id: setup-supabase-1
-      
+
       - name: Retry Supabase CLI setup if needed
         if: steps.setup-supabase-1.outcome == 'failure'
         uses: supabase/setup-cli@v1
         with:
           version: latest
-      
+
       - name: Deploy to Production
         run: |
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
