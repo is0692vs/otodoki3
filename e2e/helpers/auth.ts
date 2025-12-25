@@ -39,6 +39,13 @@ export async function loginAsTestUser(page: Page) {
  * 認証状態をクリアしてログアウト
  */
 export async function logout(page: Page) {
+    // ページがまだナビゲートされていない場合（about:blankなど）、
+    // localStorageにアクセスできないため、まず有効なURLにナビゲートする
+    const currentUrl = page.url();
+    if (currentUrl === 'about:blank' || currentUrl === '') {
+        await page.goto('/');
+    }
+    
     await page.context().clearCookies();
     await page.context().clearPermissions();
     await page.evaluate(() => localStorage.clear());
