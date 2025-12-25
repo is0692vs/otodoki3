@@ -9,12 +9,14 @@
 ### 1. テスト環境設定
 
 #### Vitest設定 (`vitest.config.ts`)
+
 - TypeScript サポート
 - カバレッジ閾値: 80% (branches, functions, lines, statements)
 - カバレッジレポート: text, lcov, html
 - テストパス: `src/**/*.{test,spec}.{ts,tsx}`
 
 #### CI/CD設定 (`.github/workflows/ci.yml`)
+
 - テスト用環境変数の設定
   - `NEXT_PUBLIC_SUPABASE_URL_TEST`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY_TEST`
@@ -24,6 +26,7 @@
 ### 2. テストフィクスチャ
 
 #### `src/lib/__fixtures__/tracks.ts`
+
 - モックトラックデータ（3件）
 - Apple RSS API モックレスポンス
 - エッジケース用データ（空配列、preview_url無し）
@@ -41,6 +44,7 @@
 **テストケース**:
 
 ##### `fetchTracksFromChart` (14 tests)
+
 - 正常系 (5 tests)
   - ✅ Apple RSS APIからトラックを取得
   - ✅ デフォルトlimit: 50
@@ -64,6 +68,7 @@
   - ✅ 成功時のタイムアウトクリア
 
 ##### `fetchTracksFromChartWithRetry` (8 tests)
+
 - リトライロジック (4 tests)
   - ✅ 初回成功
   - ✅ リトライ後成功
@@ -85,6 +90,7 @@
 **テストケース**:
 
 ##### `validateMetadata` (7 tests)
+
 - ✅ null/undefinedの処理
 - ✅ 配列の拒否
 - ✅ 有効なJSON文字列のパース
@@ -94,6 +100,7 @@
 - ✅ プリミティブ型の拒否
 
 ##### track-pool統合テスト
+
 - `getPoolSize`
   - ✅ 現在のプールサイズ取得
   - ✅ トラック追加後のサイズ反映
@@ -125,6 +132,7 @@
 #### C. `src/types/__tests__/track-pool.test.ts` (5 tests)
 
 ##### `createWeight` (5 tests)
+
 - ✅ 有効な重み (0, 0.5, 1)
 - ✅ 負の重みでエラー
 - ✅ 1超過でエラー
@@ -134,6 +142,7 @@
 ### 4. テスト戦略
 
 #### モック vs 統合テスト
+
 - **モックテスト**: 
   - 外部API (Apple RSS) は完全にモック化
   - `vi.spyOn(global, 'fetch')` を使用
@@ -145,11 +154,13 @@
   - 自動クリーンアップ実装
 
 #### テストデータ管理
+
 - フィクスチャで固定データを管理
 - 統合テストは `beforeEach`/`afterEach` で自動クリーンアップ
 - テストデータには `metadata.test_data: true` フラグを設定
 
 #### タイマー管理
+
 - Fake timers: リトライの即時テスト用
 - Real timers: 実際の非同期処理のテスト用
 - 各テストスイートで明示的に切り替え
@@ -157,11 +168,13 @@
 ### 5. ドキュメント
 
 #### `src/lib/__tests__/README.md`
+
 - 環境変数の設定方法
 - ローカルでのテスト実行方法
 - トラブルシューティング
 
 #### `README.md`
+
 - テスト実行コマンド
 - 環境変数の説明
 - カバレッジ目標
@@ -223,6 +236,7 @@ CodeQL スキャン結果: **0 alerts** ✅
 ## コードレビュー対応
 
 ### 実施した改善
+
 1. **テスト隔離性の向上**
    - `global.fetch = jest.fn()` → `vi.spyOn(global, 'fetch')` に変更
    - 各テスト後に自動リストア
@@ -242,11 +256,13 @@ CodeQL スキャン結果: **0 alerts** ✅
 ## 今後の展開
 
 ### CI環境での確認事項
+
 - [ ] track-pool統合テストの実行確認
 - [ ] カバレッジレポートの自動生成
 - [ ] カバレッジバッジの追加（オプション）
 
 ### 追加実装候補
+
 - [ ] src/lib/refill-methods/keyword.ts のテスト
 - [ ] src/lib/refill-methods/random.ts のテスト
 - [ ] E2Eテスト（Playwright等）

@@ -34,8 +34,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^5.1.2",
-    "@vitest/coverage-v8": "^4.0.16",
+    "@vitejs/plugin-react": "5.1.2",
+    "@vitest/coverage-v8": "4.0.16",
     "babel-plugin-react-compiler": "1.0.0",
     "dotenv": "^17.2.3",
     "eslint": "^9",
@@ -47,6 +47,6 @@
     "tailwindcss": "^4",
     "ts-jest": "^29.1.2",
     "typescript": "^5",
-    "vitest": "^4.0.16"
+    "vitest": "4.0.16"
   }
 }
