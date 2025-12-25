@@ -72,6 +72,9 @@ export async function middleware(request: NextRequest) {
     const path = request.nextUrl.pathname
 
     if (publicPaths.some((publicPath) => path.startsWith(publicPath))) {
+        if (user && path === '/login') {
+            return createRedirectWithCookies(request, supabaseResponse, '/')
+        }
         return supabaseResponse
     }
 
