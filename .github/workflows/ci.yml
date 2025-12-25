@@ -7,8 +7,28 @@ on:
     branches: [main]
 
 jobs:
+  # ========================================
+  # Static Analysis (並列実行可能)
+  # ========================================
   lint:
-    name: Lint & Type Check
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+        env:
+          SUPABASE_SKIP_DOWNLOAD: true
+      - name: Run linter
+        run: npm run lint
+
+  type-check:
+    name: TypeScript Type Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,11 +43,12 @@ jobs:
           SUPABASE_SKIP_DOWNLOAD: true
       - name: TypeScript type check
         run: npx tsc --noEmit
-      - name: Run linter
-        run: npm run lint
 
-  unit-test:
-    name: Unit Tests
+  # ========================================
+  # Unit Tests (並列実行可能)
+  # ========================================
+  unit-test-utils:
+    name: Unit Tests - Utils & Libs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,9 +61,151 @@ jobs:
         run: npm ci
         env:
           SUPABASE_SKIP_DOWNLOAD: true
-      - name: Run unit tests
-        run: npm run test:ci
+      - name: Run unit tests for utils
+        run: npm run test:ci -- src/lib
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_TEST }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_TEST }}
           TRACK_POOL_MAX_SIZE: ${{ secrets.TRACK_POOL_MAX_SIZE_TEST }}
+
+  unit-test-hooks:
+    name: Unit Tests - React Hooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+        env:
+          SUPABASE_SKIP_DOWNLOAD: true
+      - name: Run unit tests for hooks
+        run: npm run test:ci -- src/hooks
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_TEST }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_TEST }}
+          TRACK_POOL_MAX_SIZE: ${{ secrets.TRACK_POOL_MAX_SIZE_TEST }}
+
+  # ========================================
+  # Integration Tests (APIルートテスト)
+  # ========================================
+  integration-test-api:
+    name: Integration Tests - API Routes
+    runs-on: ubuntu-latest
+    needs: [unit-test-utils, unit-test-hooks]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+        env:
+          SUPABASE_SKIP_DOWNLOAD: true
+      - name: Run API route tests
+        run: npm run test:ci -- src/app/api
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_TEST }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_TEST }}
+          TRACK_POOL_MAX_SIZE: ${{ secrets.TRACK_POOL_MAX_SIZE_TEST }}
+
+  # ========================================
+  # E2E Tests (前後関係あり)
+  # ========================================
+  e2e-test-auth:
+    name: E2E Tests - Authentication
+    runs-on: ubuntu-latest
+    needs: [lint, type-check, integration-test-api]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+        env:
+          SUPABASE_SKIP_DOWNLOAD: true
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run auth E2E tests
+        run: npx playwright test e2e/auth.spec.ts
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_TEST }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_TEST }}
+          TRACK_POOL_MAX_SIZE: ${{ secrets.TRACK_POOL_MAX_SIZE_TEST }}
+      - name: Upload auth test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-auth
+          path: playwright-report/
+          retention-days: 7
+
+  e2e-test-discovery:
+    name: E2E Tests - Discovery Flow
+    runs-on: ubuntu-latest
+    needs: [e2e-test-auth]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+        env:
+          SUPABASE_SKIP_DOWNLOAD: true
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run discovery E2E tests
+        run: npx playwright test e2e/discovery.spec.ts
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_TEST }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_TEST }}
+          TRACK_POOL_MAX_SIZE: ${{ secrets.TRACK_POOL_MAX_SIZE_TEST }}
+      - name: Upload discovery test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-discovery
+          path: playwright-report/
+          retention-days: 7
+
+  e2e-test-playlists:
+    name: E2E Tests - Playlists Flow
+    runs-on: ubuntu-latest
+    needs: [e2e-test-auth]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+        env:
+          SUPABASE_SKIP_DOWNLOAD: true
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run playlists E2E tests
+        run: npx playwright test e2e/playlists.spec.ts
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_TEST }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_TEST }}
+          TRACK_POOL_MAX_SIZE: ${{ secrets.TRACK_POOL_MAX_SIZE_TEST }}
+      - name: Upload playlists test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-playlists
+          path: playwright-report/
+          retention-days: 7
