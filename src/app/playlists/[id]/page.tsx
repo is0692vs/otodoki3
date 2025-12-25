@@ -98,6 +98,7 @@ export default function PlaylistDetailPage() {
               type="button"
               onClick={() => router.push("/playlists")}
               className="text-2xl hover:opacity-70"
+              aria-label="戻る"
             >
               ←
             </button>
@@ -115,7 +116,10 @@ export default function PlaylistDetailPage() {
         {tracks.length === 0 ? (
           <p className="text-center text-gray-400 py-8">曲がありません</p>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+            data-testid="track-list"
+          >
             {tracks.map((track) => (
               <button
                 key={track.track_id}

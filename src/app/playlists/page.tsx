@@ -55,6 +55,7 @@ export default function PlaylistsPage() {
             key={pl.id}
             href={`/playlists/${pl.id}`}
             className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg hover:bg-gray-700"
+            data-testid="playlist-item"
           >
             <span className="text-3xl">{pl.icon}</span>
             <div className="flex-1">

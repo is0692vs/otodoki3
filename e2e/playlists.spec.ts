@@ -123,7 +123,11 @@ test.describe('プレイリスト画面', () => {
     });
 
     test('プレイリストから戻るボタンで一覧に戻れる', async ({ page }) => {
-        // プレイリスト詳細画面に移動
+        // プレイリスト一覧画面に移動してから詳細画面に移動（履歴を作成するため）
+        await page.goto('/playlists');
+        await page.waitForLoadState('networkidle');
+
+        // お気に入りプレイリストなどに移動
         await page.goto('/playlists/likes');
         await page.waitForLoadState('networkidle');
 
