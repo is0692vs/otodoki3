@@ -79,7 +79,8 @@ const fetchWithRetry = async (
 export function TrackCardStack({
   tracks,
   mode = "discover",
-  sourcePlaylist,
+  // NOTE: Intentionally unused - reserved for future playlist-to-playlist move feature
+  sourcePlaylist: _sourcePlaylist,
 }: {
   tracks: Track[];
   mode?: "discover" | "playlist";
@@ -158,6 +159,9 @@ export function TrackCardStack({
     if (!hasUserInteractedRef.current) return;
 
     play(top.preview_url);
+    // NOTE: We intentionally use stack[0] (complex expression) instead of stack to avoid re-running
+    // this effect on every stack change. We only want to run when the top card changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stack[0], play]);
 
   const swipeTop = (direction: SwipeDirection, item: CardItem) => {

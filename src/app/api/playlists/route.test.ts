@@ -15,6 +15,7 @@ describe('GET /api/playlists', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockSupabase = createMockSupabaseClient();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         vi.mocked(createClient).mockResolvedValue(mockSupabase as any);
     });
 
@@ -44,6 +45,7 @@ describe('GET /api/playlists', () => {
             expect(data.playlists).toHaveLength(2);
 
             // Verify likes playlist
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const likesPlaylist = data.playlists.find((p: any) => p.id === 'likes');
             expect(likesPlaylist).toBeDefined();
             expect(likesPlaylist.name).toBe('お気に入り');
@@ -51,6 +53,7 @@ describe('GET /api/playlists', () => {
             expect(likesPlaylist.count).toBe(5);
 
             // Verify dislikes playlist
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const dislikesPlaylist = data.playlists.find((p: any) => p.id === 'dislikes');
             expect(dislikesPlaylist).toBeDefined();
             expect(dislikesPlaylist.name).toBe('スキップ済み');
