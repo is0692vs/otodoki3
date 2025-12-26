@@ -34,9 +34,9 @@ export default function PlaylistDetailPage() {
         const res = await fetch(`/api/playlists/${id}`);
 
         // === デバッグログ追加 ===
-        console.log('=== Playlist Detail Fetch ===');
-        console.log('Status:', res.status);
-        console.log('OK:', res.ok);
+        console.log("=== Playlist Detail Fetch ===");
+        console.log("Status:", res.status);
+        console.log("OK:", res.ok);
         // === ここまで ===
 
         if (res.status === 401 || res.status === 403) {
@@ -52,9 +52,9 @@ export default function PlaylistDetailPage() {
         const responseData = await res.json();
 
         // === デバッグログ追加 ===
-        console.log('Response data:', responseData);
-        console.log('Tracks:', responseData.tracks);
-        console.log('Tracks length:', responseData.tracks?.length);
+        console.log("Response data:", responseData);
+        console.log("Tracks:", responseData.tracks);
+        console.log("Tracks length:", responseData.tracks?.length);
         // === ここまで ===
 
         setTracks(responseData.tracks || []);
