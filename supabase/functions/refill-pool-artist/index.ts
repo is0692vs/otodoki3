@@ -43,6 +43,15 @@ interface TrackPoolEntry {
   fetched_at: string;
 }
 
+/**
+ * 与えられた2つのバイト配列がタイミング攻撃に耐える方法で等しいかどうかを判定する。
+ *
+ * 長さが等しく、すべてのバイトが一致する場合に等しいと判断する。実行時間は入力長が等しい限り内容によらず一定となるよう設計されている。
+ *
+ * @param a - 比較対象の最初のバイト配列
+ * @param b - 比較対象の2番目のバイト配列
+ * @returns `true` の場合は配列の長さとすべてのバイトが一致、`false` の場合はそうでない
+ */
 function timingSafeEqualBytes(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
@@ -52,6 +61,13 @@ function timingSafeEqualBytes(a: Uint8Array, b: Uint8Array): boolean {
   return diff === 0;
 }
 
+/**
+ * リクエストが期待される認証ヘッダーを持つか検証する。
+ *
+ * 指定されたリクエストの `Authorization` ヘッダーを環境変数 `CRON_AUTH_KEY` に基づく期待値と安全な比較（タイミング攻撃を防ぐ比較）で照合する。
+ *
+ * @returns `true` ならヘッダーが一致し、`false` なら一致しない。 
+ */
 function isAuthorizedRequest(req: Request): boolean {
   const authHeader = req.headers.get('Authorization') ?? '';
   const cronAuthKey = Deno.env.get('CRON_AUTH_KEY') ?? '';
@@ -61,6 +77,12 @@ function isAuthorizedRequest(req: Request): boolean {
   return timingSafeEqualBytes(encoder.encode(authHeader), encoder.encode(expectedAuth));
 }
 
+/**
+ * 指定したアーティスト名で iTunes Search API を検索して楽曲の結果を取得する。
+ *
+ * @returns iTunes Search API から得られた曲の結果配列。結果がない場合は空配列を返す。
+ * @throws iTunes Search API が非 OK ステータスを返した場合に Error をスローする。
+ */
 async function fetchItunesSearchByArtist(artistName: string): Promise<iTunesSearchResult[]> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), ITUNES_TIMEOUT_MS);
@@ -83,6 +105,12 @@ async function fetchItunesSearchByArtist(artistName: string): Promise<iTunesSear
   }
 }
 
+/**
+ * 高解像度のアートワークURLを生成します。
+ *
+ * @param artworkUrl100 - 100x100のアートワークURL（iTunes APIの`artworkUrl100`形式）
+ * @returns 1000x1000サイズに変換したURL、入力が未定義または空文字の場合は`null`
+ */
 function toHighQualityArtworkUrl(artworkUrl100?: string): string | null {
   if (!artworkUrl100) return null;
   return artworkUrl100.replace('100x100bb', '1000x1000bb');
