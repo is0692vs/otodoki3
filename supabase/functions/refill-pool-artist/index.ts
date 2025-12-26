@@ -145,12 +145,7 @@ Deno.serve(async (req: Request) => {
 
         // 1) Pick random tracks from pool
         const { data: randomTracks, error: randomError } = await supabase
-            .from('track_pool')
-            .select('artist_name')
-            // PostgREST allows ordering by function; this maps to `order=random()`.
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .order('random()' as any)
-            .limit(5);
+            .rpc('get_random_artists', { limit_count: 5 });
 
         if (randomError) throw randomError;
 
