@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-slim
     permissions:
       issues: write
-    if: github.event.issue.user.login == github.repository_owner
+    if: github.event.issue.user.login == 'is0692vs'
     steps:
       - name: Check for @Jules mention and trigger Jules
         uses: actions/github-script@v8
