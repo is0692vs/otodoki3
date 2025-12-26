@@ -4,7 +4,12 @@ import { NextResponse } from 'next/server';
 type LikeWithTrack = {
     track_id: string;
     created_at: string | null;
-    track_pool: Array<{
+    track_pool: {
+        track_name: string;
+        artist_name: string;
+        artwork_url: string | null;
+        preview_url: string;
+    } | Array<{
         track_name: string;
         artist_name: string;
         artwork_url: string | null;
@@ -36,6 +41,16 @@ export async function GET() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
+    // === デバッグログ追加 ===
+    console.log('=== Likes API Debug ===');
+    console.log('Raw data:', JSON.stringify(data, null, 2));
+    console.log('Error:', error);
+    console.log('Data length:', data?.length);
+    if (data && data.length > 0) {
+        console.log('First item structure:', JSON.stringify(data[0], null, 2));
+    }
+    // === ここまで ===
+
     if (error) {
         console.error('Failed to fetch likes:', error);
         return NextResponse.json({ error: 'Failed to fetch likes' }, { status: 500 });
@@ -43,16 +58,21 @@ export async function GET() {
 
     // null track_pool を除外してフラット化
     const tracks = (data as unknown as LikeWithTrack[])
-        .filter(item => item.track_pool !== null && item.track_pool!.length > 0)
-        .map(item => ({
-            track_id: String(item.track_id),
-            type: 'track' as const,
-            track_name: item.track_pool![0].track_name,
-            artist_name: item.track_pool![0].artist_name,
-            artwork_url: item.track_pool![0].artwork_url,
-            preview_url: item.track_pool![0].preview_url,
-            created_at: item.created_at,
-        }));
+        .filter(item => item.track_pool !== null)
+        .map(item => {
+            const pool = Array.isArray(item.track_pool) ? item.track_pool[0] : item.track_pool;
+            if (!pool) return null;
+            return {
+                track_id: String(item.track_id),
+                type: 'track' as const,
+                track_name: pool.track_name,
+                artist_name: pool.artist_name,
+                artwork_url: pool.artwork_url,
+                preview_url: pool.preview_url,
+                created_at: item.created_at,
+            };
+        })
+        .filter((t): t is NonNullable<typeof t> => t !== null);
 
     return NextResponse.json({ tracks });
 }
