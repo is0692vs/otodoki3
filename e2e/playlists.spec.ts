@@ -1,6 +1,25 @@
 import { test, expect } from '@playwright/test';
 import { setupAuthenticatedSession } from './helpers/auth';
 
+async function expectPlaylistDetailPageReady(page: import('@playwright/test').Page) {
+    // 本アプリは <main> を使っていないため、詳細画面は見出し・一覧・空状態で判定する
+    const heading = page.locator('h1').first();
+
+    await expect(heading).toBeVisible();
+
+    const trackList = page.locator('[data-testid="track-list"]');
+    const emptyMessage = page.locator('text=/曲がありません|トラックがありません|空です|No tracks/i');
+
+    await expect.poll(
+        async () => {
+            const hasTrackList = await trackList.isVisible().catch(() => false);
+            const hasEmpty = await emptyMessage.isVisible().catch(() => false);
+            return hasTrackList || hasEmpty;
+        },
+        { timeout: 10000 }
+    ).toBeTruthy();
+}
+
 test.describe('プレイリスト画面', () => {
     test.beforeEach(async ({ page }) => {
         // 認証済み状態でテストを開始
@@ -43,8 +62,7 @@ test.describe('プレイリスト画面', () => {
 
             // 詳細画面が表示されることを確認
             await page.waitForLoadState('networkidle');
-            const mainContent = page.locator('main');
-            await expect(mainContent).toBeVisible();
+            await expectPlaylistDetailPageReady(page);
         } else {
             test.skip();
         }
@@ -68,8 +86,7 @@ test.describe('プレイリスト画面', () => {
 
             // 詳細画面が表示されることを確認
             await page.waitForLoadState('networkidle');
-            const mainContent = page.locator('main');
-            await expect(mainContent).toBeVisible();
+            await expectPlaylistDetailPageReady(page);
         } else {
             test.skip();
         }
@@ -80,22 +97,7 @@ test.describe('プレイリスト画面', () => {
         await page.goto('/playlists/likes');
         await page.waitForLoadState('networkidle');
 
-        // トラックリストが表示されているか確認
-        const trackList = page.locator('[data-testid="track-list"]').or(page.locator('ul, ol, div[role="list"]'));
-
-        // リストが存在することを確認（トラックが0件でも表示される）
-        const exists = await trackList.isVisible({ timeout: 2000 }).catch(() => false);
-
-        if (exists) {
-            await expect(trackList).toBeVisible();
-        } else {
-            // トラックが0件の場合は空の状態メッセージが表示される可能性がある
-            const emptyMessage = page.locator('text=/トラックがありません|空です|No tracks/i');
-            const hasEmptyMessage = await emptyMessage.isVisible({ timeout: 1000 }).catch(() => false);
-
-            // いずれかが表示されていればOK
-            expect(exists || hasEmptyMessage).toBeTruthy();
-        }
+        await expectPlaylistDetailPageReady(page);
     });
 
     test('スワイプモードに切り替えできる', async ({ page }) => {
