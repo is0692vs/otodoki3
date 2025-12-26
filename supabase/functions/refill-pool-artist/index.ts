@@ -70,8 +70,15 @@ function timingSafeEqualBytes(a: Uint8Array, b: Uint8Array): boolean {
  */
 function isAuthorizedRequest(req: Request): boolean {
   const authHeader = req.headers.get('Authorization') ?? '';
-  const cronAuthKey = Deno.env.get('CRON_AUTH_KEY') ?? '';
-  const expectedAuth = cronAuthKey ? `Bearer ${cronAuthKey}` : '';
+  const cronAuthKey = Deno.env.get('CRON_AUTH_KEY');
+
+  // CRON_AUTH_KEY未設定時は全リクエストを拒否（セキュアなフェイル）
+  if (!cronAuthKey) {
+    console.error('CRON_AUTH_KEY is not set. Denying all requests.');
+    return false;
+  }
+
+  const expectedAuth = `Bearer ${cronAuthKey}`;
 
   const encoder = new TextEncoder();
   return timingSafeEqualBytes(encoder.encode(authHeader), encoder.encode(expectedAuth));
@@ -237,7 +244,15 @@ Deno.serve(async (req: Request) => {
     }
 
     // 4) Trim pool
-    const maxSize = parseInt(Deno.env.get('TRACK_POOL_MAX_SIZE') ?? '10000', 10);
+    const defaultMaxSize = 10000;
+    const maxSizeStr = Deno.env.get('TRACK_POOL_MAX_SIZE') ?? String(defaultMaxSize);
+    let maxSize = parseInt(maxSizeStr, 10);
+
+    if (isNaN(maxSize)) {
+      console.warn(`Invalid TRACK_POOL_MAX_SIZE: "${maxSizeStr}". Falling back to default: ${defaultMaxSize}`);
+      maxSize = defaultMaxSize;
+    }
+
     const { error: rpcError } = await supabase.rpc('trim_track_pool', { max_size: maxSize });
     if (rpcError) throw rpcError;
 
