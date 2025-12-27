@@ -201,10 +201,21 @@ Deno.serve(async (req: Request) => {
             }
 
             artistsSucceeded += 1;
-            const { items } = settled.value;
-            tracksFetched += items.length;
+            const { artistName, items } = settled.value;
+            const fetchedCount = items.length;
+            console.log(`[Artist: ${artistName}] Fetched ${fetchedCount} tracks from iTunes API`);
 
-            for (const item of items) {
+            // アーティスト名の厳密マッチングフィルタを適用
+            const filteredItems = items.filter((item) => {
+                return item.artistName.toLowerCase() === artistName.toLowerCase();
+            });
+
+            const filteredCount = filteredItems.length;
+            console.log(`[Artist: ${artistName}] After filtering: ${filteredCount} tracks (filtered out: ${fetchedCount - filteredCount})`);
+
+            tracksFetched += fetchedCount;
+
+            for (const item of filteredItems) {
                 if (!item.previewUrl) {
                     tracksSkippedNoPreview += 1;
                     continue;
