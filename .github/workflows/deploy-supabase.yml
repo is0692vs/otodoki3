@@ -33,13 +33,51 @@ jobs:
         with:
           version: latest
 
-      - name: Deploy to Test
+      - name: Apply Migrations to Test
         run: |
-          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
-          # supabase db push --include-all  # マイグレーション変更時のみ有効化
-          supabase functions deploy refill-pool --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
-          supabase functions deploy refill-pool-artist --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
-          supabase functions deploy cleanup-pool --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
+          supabase db push --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }} --dry-run
+          supabase db push --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy all Edge Functions to Test
+        run: |
+          # Check if functions directory exists
+          if [ ! -d "supabase/functions" ]; then
+            echo "No functions directory found, skipping deployment"
+            exit 0
+          fi
+
+          deployed=0
+          failed=0
+
+          # Loop through directories in supabase/functions
+          for dir in supabase/functions/*/; do
+            # Skip if glob didn't match anything (e.g. empty directory)
+            [ -d "$dir" ] || continue
+
+            # Check for valid function entry point
+            if [ ! -f "${dir}index.ts" ] && [ ! -f "${dir}index.js" ]; then
+              echo "Skipping $dir (no index.ts/js found)"
+              continue
+            fi
+
+            func_name=$(basename "$dir")
+            echo "Deploying $func_name to TEST..."
+            
+            if supabase functions deploy "$func_name" --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}; then
+              echo "✓ Successfully deployed $func_name"
+              deployed=$((deployed + 1))
+            else
+              echo "✗ Failed to deploy $func_name"
+              failed=$((failed + 1))
+            fi
+          done
+
+          echo "Deployment summary: $deployed succeeded, $failed failed"
+          if [ $failed -gt 0 ]; then
+            exit 1
+          fi
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -63,12 +101,50 @@ jobs:
         with:
           version: latest
 
-      - name: Deploy to Production
+      - name: Apply Migrations to Production
         run: |
-          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-          # supabase db push --include-all  # マイグレーション変更時のみ有効化
-          supabase functions deploy refill-pool --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-          supabase functions deploy refill-pool-artist --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-          supabase functions deploy cleanup-pool --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+          supabase db push --project-ref ${{ secrets.SUPABASE_PROJECT_REF }} --dry-run
+          supabase db push --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy all Edge Functions to Production
+        run: |
+          # Check if functions directory exists
+          if [ ! -d "supabase/functions" ]; then
+            echo "No functions directory found, skipping deployment"
+            exit 0
+          fi
+
+          deployed=0
+          failed=0
+
+          # Loop through directories in supabase/functions
+          for dir in supabase/functions/*/; do
+            # Skip if glob didn't match anything
+            [ -d "$dir" ] || continue
+
+            # Check for valid function entry point
+            if [ ! -f "${dir}index.ts" ] && [ ! -f "${dir}index.js" ]; then
+              echo "Skipping $dir (no index.ts/js found)"
+              continue
+            fi
+
+            func_name=$(basename "$dir")
+            echo "Deploying $func_name to PROD..."
+            
+            if supabase functions deploy "$func_name" --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}; then
+              echo "✓ Successfully deployed $func_name"
+              deployed=$((deployed + 1))
+            else
+              echo "✗ Failed to deploy $func_name"
+              failed=$((failed + 1))
+            fi
+          done
+
+          echo "Deployment summary: $deployed succeeded, $failed failed"
+          if [ $failed -gt 0 ]; then
+            exit 1
+          fi
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
