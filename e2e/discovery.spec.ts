@@ -16,6 +16,66 @@ async function ensureTopIsTrackCard(page: import('@playwright/test').Page) {
     }
 }
 
+/**
+ * スワイプアクション（like/dislike）のテスト共通処理
+ */
+async function testSwipeAction(
+    page: import('@playwright/test').Page,
+    buttonLabel: string,
+    apiEndpoint: string
+) {
+    // コンソールログを監視
+    page.on('console', msg => {
+        if (msg.type() === 'error' || msg.text().includes('[API]') || msg.text().includes('[Rollback]') || msg.text().includes('[swipeTop]')) {
+            console.log(`Browser console: ${msg.text()}`);
+        }
+    });
+
+    // 先頭がチュートリアルなら除去して、実トラックカードで検証する
+    await ensureTopIsTrackCard(page);
+
+    const topSwipeable = page.locator('[aria-label$="をスワイプ"]:not([aria-hidden="true"])').first();
+    const firstTopLabel = (await topSwipeable.getAttribute('aria-label')) ?? '';
+    console.log('First card:', firstTopLabel);
+
+    // APIリクエストを監視（タイムアウトを長めに設定）
+    const apiPromise = page.waitForResponse(
+        response => response.url().includes(apiEndpoint) && response.request().method() === 'POST',
+        { timeout: 15000 }
+    ).catch(err => {
+        console.log('API request not captured:', err.message);
+        return null;
+    });
+
+    // UI実装に合わせて確実にボタンをクリック
+    await page.locator(`button[aria-label="${buttonLabel}"]`).click();
+    console.log(`Clicked ${buttonLabel} button`);
+
+    // スワイプアニメーションが完了するまで待つ (200ms animation + 200ms buffer)
+    await page.waitForTimeout(400);
+
+    // APIレスポンスを待つ
+    const response = await apiPromise;
+    if (response) {
+        const responseBody = await response.json().catch(() => ({ error: 'Failed to parse JSON' }));
+        console.log('API Response:', response.status(), responseBody);
+
+        // APIが成功した場合のみ、次のカードが表示されることを期待
+        if (response.status() === 200) {
+            // exitアニメーションが完了し、新しいカードが表示されていることを確認
+            await expect.poll(async () => {
+                const next = await page.locator('[aria-label$="をスワイプ"]:not([aria-hidden="true"])').first().getAttribute('aria-label');
+                console.log('Current card:', next);
+                return next ?? '';
+            }, { timeout: 3000, intervals: [200] }).not.toBe(firstTopLabel);
+        } else {
+            throw new Error(`API call failed with status ${response.status()}`);
+        }
+    } else {
+        throw new Error('No API response captured - API may not have been called');
+    }
+}
+
 test.describe('ディスカバリー画面', () => {
     test.beforeEach(async ({ page }) => {
         // 認証済み状態でテストを開始
@@ -44,110 +104,13 @@ test.describe('ディスカバリー画面', () => {
     test('右スワイプ（Like）で次のカードが表示される', async ({ page }) => {
         await page.goto('/');
         await page.waitForLoadState('networkidle');
-
-        // コンソールログを監視
-        page.on('console', msg => {
-            if (msg.type() === 'error' || msg.text().includes('[API]') || msg.text().includes('[Rollback]') || msg.text().includes('[swipeTop]')) {
-                console.log(`Browser console: ${msg.text()}`);
-            }
-        });
-
-        // 先頭がチュートリアルなら除去して、実トラックカードで検証する
-        await ensureTopIsTrackCard(page);
-
-        const topSwipeable = page.locator('[aria-label$="をスワイプ"]:not([aria-hidden="true"])').first();
-        const firstTopLabel = (await topSwipeable.getAttribute('aria-label')) ?? '';
-        console.log('First card:', firstTopLabel);
-
-        // APIリクエストを監視（タイムアウトを長めに設定）
-        const apiPromise = page.waitForResponse(
-            response => response.url().includes('/api/tracks/like') && response.request().method() === 'POST',
-            { timeout: 15000 }
-        ).catch(err => {
-            console.log('API request not captured:', err.message);
-            return null;
-        });
-
-        // UI実装に合わせて確実にボタンをクリック
-        await page.locator('button[aria-label="いいね"]').click();
-        console.log('Clicked like button');
-
-        // スワイプアニメーションが完了するまで待つ (200ms animation + 200ms buffer)
-        await page.waitForTimeout(400);
-
-        // APIレスポンスを待つ
-        const response = await apiPromise;
-        if (response) {
-            const responseBody = await response.json().catch(() => ({ error: 'Failed to parse JSON' }));
-            console.log('API Response:', response.status(), responseBody);
-
-            // APIが成功した場合のみ、次のカードが表示されることを期待
-            if (response.status() === 200) {
-                // exitアニメーションが完了し、新しいカードが表示されていることを確認
-                await expect.poll(async () => {
-                    const next = await page.locator('[aria-label$="をスワイプ"]:not([aria-hidden="true"])').first().getAttribute('aria-label');
-                    console.log('Current card:', next);
-                    return next ?? '';
-                }, { timeout: 3000, intervals: [200] }).not.toBe(firstTopLabel);
-            } else {
-                throw new Error(`API call failed with status ${response.status()}`);
-            }
-        } else {
-            throw new Error('No API response captured - API may not have been called');
-        }
+        await testSwipeAction(page, 'いいね', '/api/tracks/like');
     });
 
     test('左スワイプ（Dislike）で次のカードが表示される', async ({ page }) => {
         await page.goto('/');
         await page.waitForLoadState('networkidle');
-
-        // コンソールログを監視
-        page.on('console', msg => {
-            if (msg.type() === 'error' || msg.text().includes('[API]') || msg.text().includes('[Rollback]') || msg.text().includes('[swipeTop]')) {
-                console.log(`Browser console: ${msg.text()}`);
-            }
-        });
-
-        // 先頭がチュートリアルなら除去して、実トラックカードで検証する
-        await ensureTopIsTrackCard(page);
-
-        const topSwipeable = page.locator('[aria-label$="をスワイプ"]:not([aria-hidden="true"])').first();
-        const firstTopLabel = (await topSwipeable.getAttribute('aria-label')) ?? '';
-        console.log('First card:', firstTopLabel);
-
-        // APIリクエストを監視
-        const apiPromise = page.waitForResponse(
-            response => response.url().includes('/api/tracks/dislike') && response.request().method() === 'POST',
-            { timeout: 15000 }
-        ).catch(err => {
-            console.log('API request not captured:', err.message);
-            return null;
-        });
-
-        await page.locator('button[aria-label="よくない"]').click();
-        console.log('Clicked dislike button');
-
-        // スワイプアニメーションが完了するまで待つ
-        await page.waitForTimeout(400);
-
-        // APIレスポンスを待つ
-        const response = await apiPromise;
-        if (response) {
-            const responseBody = await response.json().catch(() => ({ error: 'Failed to parse JSON' }));
-            console.log('API Response:', response.status(), responseBody);
-
-            if (response.status() === 200) {
-                await expect.poll(async () => {
-                    const next = await page.locator('[aria-label$="をスワイプ"]:not([aria-hidden="true"])').first().getAttribute('aria-label');
-                    console.log('Current card:', next);
-                    return next ?? '';
-                }, { timeout: 3000, intervals: [200] }).not.toBe(firstTopLabel);
-            } else {
-                throw new Error(`API call failed with status ${response.status()}`);
-            }
-        } else {
-            throw new Error('No API response captured - API may not have been called');
-        }
+        await testSwipeAction(page, 'よくない', '/api/tracks/dislike');
     });
 
     test('Likeボタンクリックで動作する', async ({ page }) => {

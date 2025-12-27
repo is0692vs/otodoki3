@@ -97,7 +97,6 @@ export function TrackCardStack({
   const { play, stop, pause, resume, isPlaying, progress } = useAudioPlayer();
   const hasUserInteractedRef = useRef(false);
   const topCardRef = useRef<SwipeableCardRef>(null);
-  const rollbackCounterRef = useRef(0); // ロールバック時にkeyを変更するためのカウンター
 
   const handleRefill = useCallback((newTracks: CardItem[]) => {
     setStack((prev) => {
@@ -227,7 +226,7 @@ export function TrackCardStack({
         setActionInProgress(true);
         try {
           console.log(`[API] Calling /api/tracks/like for track:`, id);
-          const response = await fetchWithRetry(
+          await fetchWithRetry(
             "/api/tracks/like",
             {
               method: "POST",
