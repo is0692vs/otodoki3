@@ -151,6 +151,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
     );
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
+      // Avoid handling when not top, already swiping, or key is repeating while held down
       if (!isTop || isSwipingRef.current || e.repeat) return;
 
       if (e.key === "ArrowLeft") {
@@ -224,7 +225,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         scheduleSwipeCompletion("left");
       } else {
         animate(x, 0, SNAP_BACK_SPRING);
-        // Snap-back uses framer-motion animation without the swipe completion timeout, so unlock immediately
+        // Reset swipe lock immediately for snap-back since it uses framer-motion's built-in animation without the completion timeout
         isSwipingRef.current = false;
       }
     };
