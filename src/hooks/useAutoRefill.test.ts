@@ -23,6 +23,8 @@ describe('useAutoRefill', () => {
         mockFetch.mockResolvedValue({
             ok: true,
             json: async () => ({ tracks: [] }),
+            text: async () => JSON.stringify({ tracks: [] }),
+            headers: new Headers({ 'content-type': 'application/json' }),
         });
     });
 
@@ -61,6 +63,8 @@ describe('useAutoRefill', () => {
         mockFetch.mockResolvedValue({
             ok: true,
             json: async () => ({ tracks: newTracks }),
+            text: async () => JSON.stringify({ tracks: newTracks }),
+            headers: new Headers({ 'content-type': 'application/json' }),
         });
 
         renderHook(() => useAutoRefill(stack, onRefill));
