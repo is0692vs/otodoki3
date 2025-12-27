@@ -152,11 +152,9 @@ Deno.serve(async (req: Request) => {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         // 1) track_pool からランダムに50件取得
+        // PostgRESTはorder by random()をサポートしていないため、RPCを使用
         const { data: randomTracks, error: fetchError } = await supabase
-            .from('track_pool')
-            .select('id, artist')
-            .limit(SCAN_TRACK_COUNT)
-            .order('random()', { ascending: true });
+            .rpc('get_random_tracks_for_cleanup', { limit_count: SCAN_TRACK_COUNT });
 
         if (fetchError) {
             console.error('Failed to fetch tracks from track_pool:', fetchError);
@@ -183,15 +181,24 @@ Deno.serve(async (req: Request) => {
         }
 
         // 2) Last.fm API を呼び出して各アーティストのリスナー数を取得
+        // 並列化してパフォーマンス改善（レート制限は各リクエストの開始時間をずらすことで対応）
+        const results = await Promise.all(
+            tracks.map((track, index) =>
+                new Promise<{ track: TrackPoolRow; listeners: number | null }>((resolve) =>
+                    setTimeout(
+                        () =>
+                            getLastFmListeners(track.artist)
+                                .then((listeners) => resolve({ track, listeners })),
+                        index * RATE_LIMIT_DELAY_MS
+                    )
+                )
+            )
+        );
+
         const deletedTracks: DeletedTrack[] = [];
         const trackIdsToDelete: string[] = [];
 
-        for (const track of tracks) {
-            const listeners = await getLastFmListeners(track.artist);
-
-            // レート制限対策: 各リクエスト間に200msの遅延
-            await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY_MS));
-
+        for (const { track, listeners } of results) {
             // null の場合はスキップ（fail-open）
             if (listeners === null) {
                 continue;
@@ -221,7 +228,7 @@ Deno.serve(async (req: Request) => {
                 throw deleteError;
             }
 
-            deletedCount = count ?? trackIdsToDelete.length;
+            deletedCount = count ?? 0;
         }
 
         console.log(`[Cleanup] Deleted: ${deletedCount} tracks (listeners < ${LISTENERS_THRESHOLD})`);
