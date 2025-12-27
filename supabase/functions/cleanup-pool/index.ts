@@ -241,8 +241,8 @@ Deno.serve(async (req: Request) => {
     } catch (error: unknown) {
         console.error('Error in cleanup-pool function:', error);
         return new Response(
-            JSON.stringify({ 
-                success: false, 
+            JSON.stringify({
+                success: false,
                 error: error instanceof Error ? error.message : 'An internal server error occurred'
             }),
             { status: 500, headers: { 'Content-Type': 'application/json' } },
