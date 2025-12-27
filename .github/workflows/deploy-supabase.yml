@@ -5,11 +5,13 @@ on:
     paths:
       - "supabase/functions/**"
       - "supabase/migrations/**"
+      - ".github/workflows/deploy-supabase.yml"
   pull_request:
     types: [opened, reopened, synchronize]
     paths:
       - "supabase/functions/**"
       - "supabase/migrations/**"
+      - ".github/workflows/deploy-supabase.yml"
   workflow_dispatch: {}
 
 jobs:
@@ -33,12 +35,19 @@ jobs:
         with:
           version: latest
 
-      - name: Apply Migrations to Test
-        run: |
-          supabase db push --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }} --dry-run
-          supabase db push --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
+      - name: Link Supabase Project (Test)
+        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_TEST }}
+
+      - name: Apply Migrations to Test
+        run: |
+          supabase db push --dry-run
+          supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_TEST }}
 
       - name: Deploy all Edge Functions to Test
         run: |
@@ -101,12 +110,19 @@ jobs:
         with:
           version: latest
 
-      - name: Apply Migrations to Production
-        run: |
-          supabase db push --project-ref ${{ secrets.SUPABASE_PROJECT_REF }} --dry-run
-          supabase db push --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+      - name: Link Supabase Project (Production)
+        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      - name: Apply Migrations to Production
+        run: |
+          supabase db push --dry-run
+          supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
       - name: Deploy all Edge Functions to Production
         run: |
