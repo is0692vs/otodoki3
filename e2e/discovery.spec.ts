@@ -20,6 +20,23 @@ test.describe('ディスカバリー画面', () => {
     test.beforeEach(async ({ page }) => {
         // 認証済み状態でテストを開始
         await setupAuthenticatedSession(page);
+
+        // Like/Dislike APIリクエストをモックして常に成功を返す
+        await page.route('**/api/tracks/like', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ success: true }),
+            });
+        });
+
+        await page.route('**/api/tracks/dislike', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ success: true }),
+            });
+        });
     });
 
     test('カードが表示される', async ({ page }) => {
