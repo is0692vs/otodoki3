@@ -97,6 +97,7 @@ export function TrackCardStack({
   const { play, stop, pause, resume, isPlaying, progress } = useAudioPlayer();
   const hasUserInteractedRef = useRef(false);
   const topCardRef = useRef<SwipeableCardRef>(null);
+  const lastPlayedUrlRef = useRef<string | null>(null);
 
   const handleRefill = useCallback((newTracks: CardItem[]) => {
     setStack((prev) => {
@@ -156,7 +157,11 @@ export function TrackCardStack({
     // 初回インタラクション前は再生しない（自動再生ポリシー対策）
     if (!hasUserInteractedRef.current) return;
 
+    // すでに再生指示済みのURLならスキップ（swipeTopでの先行再生との重複防止）
+    if (lastPlayedUrlRef.current === top.preview_url) return;
+
     play(top.preview_url);
+    lastPlayedUrlRef.current = top.preview_url;
     // NOTE: We intentionally use stack[0] (complex expression) instead of stack to avoid re-running
     // this effect on every stack change. We only want to run when the top card changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,6 +173,15 @@ export function TrackCardStack({
 
     // 初回スワイプでフラグをON
     hasUserInteractedRef.current = true;
+
+    // 次のカードを取得
+    const nextCard = stack[1];
+
+    // ユーザージェスチャーのコンテキスト内で同期的に play() を開始
+    if (nextCard && "track_id" in nextCard && nextCard.preview_url) {
+      play(nextCard.preview_url);
+      lastPlayedUrlRef.current = nextCard.preview_url;
+    }
 
     // チュートリアルカード判定
     if ("type" in item && item.type === "tutorial") {
