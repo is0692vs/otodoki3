@@ -62,11 +62,12 @@ function timingSafeEqualBytes(a: Uint8Array, b: Uint8Array): boolean {
  * リクエストが期待される認証ヘッダーを持つか検証する。
  *
  * 指定されたリクエストの `Authorization` ヘッダーを環境変数 `CRON_AUTH_KEY` に基づく期待値と安全な比較（タイミング攻撃を防ぐ比較）で照合する。
+ * タイミング攻撃対策として、両方の値をSHA-256でハッシュ化してから比較する。
  *
  * @returns `true` ならヘッダーが一致し、`false` なら一致しない。 
  */
-function isAuthorizedRequest(req: Request): boolean {
-    const authHeader = req.headers.get('Authorization') ?? '';
+async function isAuthorizedRequest(req: Request): Promise<boolean> {
+    const authHeader = (req.headers.get('Authorization') ?? '').trim();
     const cronAuthKey = Deno.env.get('CRON_AUTH_KEY');
 
     // CRON_AUTH_KEY未設定時は全リクエストを拒否（セキュアなフェイル）
@@ -77,8 +78,12 @@ function isAuthorizedRequest(req: Request): boolean {
 
     const expectedAuth = `Bearer ${cronAuthKey}`;
 
+    // タイミング攻撃対策: 両方の値をSHA-256でハッシュ化してから比較
     const encoder = new TextEncoder();
-    return timingSafeEqualBytes(encoder.encode(authHeader), encoder.encode(expectedAuth));
+    const authHeaderHash = new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(authHeader)));
+    const expectedAuthHash = new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(expectedAuth)));
+
+    return timingSafeEqualBytes(authHeaderHash, expectedAuthHash);
 }
 
 /**
@@ -133,8 +138,16 @@ async function getLastFmListeners(artistName: string): Promise<number | null> {
 Deno.serve(async (req: Request) => {
     const startTime = Date.now();
 
+    // HTTPメソッド制限
+    if (req.method !== 'POST') {
+        return new Response(
+            JSON.stringify({ success: false, error: 'Method Not Allowed' }),
+            { status: 405, headers: { 'Content-Type': 'application/json', 'Allow': 'POST' } },
+        );
+    }
+
     // 認証チェック
-    if (!isAuthorizedRequest(req)) {
+    if (!(await isAuthorizedRequest(req))) {
         console.error('Unauthorized request');
         return new Response(
             JSON.stringify({ success: false, error: 'Unauthorized' }),
@@ -188,7 +201,8 @@ Deno.serve(async (req: Request) => {
                     setTimeout(
                         () =>
                             getLastFmListeners(track.artist)
-                                .then((listeners) => resolve({ track, listeners })),
+                                .then((listeners) => resolve({ track, listeners }))
+                                .catch(() => resolve({ track, listeners: null })),
                         index * RATE_LIMIT_DELAY_MS
                     )
                 )
@@ -246,11 +260,13 @@ Deno.serve(async (req: Request) => {
             { headers: { 'Content-Type': 'application/json' } },
         );
     } catch (error: unknown) {
+        // 内部ログには詳細なエラー情報を出力
         console.error('Error in cleanup-pool function:', error);
+        // クライアントには汎用的なエラーメッセージのみを返す
         return new Response(
             JSON.stringify({
                 success: false,
-                error: error instanceof Error ? error.message : 'An internal server error occurred'
+                error: 'An internal server error occurred'
             }),
             { status: 500, headers: { 'Content-Type': 'application/json' } },
         );
