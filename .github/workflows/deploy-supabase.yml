@@ -39,6 +39,7 @@ jobs:
           # supabase db push --include-all  # マイグレーション変更時のみ有効化
           supabase functions deploy refill-pool --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
           supabase functions deploy refill-pool-artist --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
+          supabase functions deploy cleanup-pool --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -68,5 +69,6 @@ jobs:
           # supabase db push --include-all  # マイグレーション変更時のみ有効化
           supabase functions deploy refill-pool --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
           supabase functions deploy refill-pool-artist --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+          supabase functions deploy cleanup-pool --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
