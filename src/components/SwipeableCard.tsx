@@ -16,6 +16,7 @@ import {
   useState,
   forwardRef,
   useImperativeHandle,
+  useCallback,
 } from "react";
 import type { CardItem } from "../types/track-pool";
 import { TrackCard } from "./TrackCard";
@@ -82,7 +83,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
     const x = useMotionValue(0);
     const swipeTimeoutRef = useRef<number | null>(null);
     const isSwipingRef = useRef(false);
-    const scheduleSwipeCompletion = React.useCallback(
+    const scheduleSwipeCompletion = useCallback(
       (direction: "left" | "right") => {
         if (swipeTimeoutRef.current !== null) {
           clearTimeout(swipeTimeoutRef.current);
@@ -223,7 +224,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         scheduleSwipeCompletion("left");
       } else {
         animate(x, 0, SNAP_BACK_SPRING);
-        // スナップバック時はタイマーを使わないので即時解除
+        // Immediate unlock for snap-back since no timer is used
         isSwipingRef.current = false;
       }
     };
