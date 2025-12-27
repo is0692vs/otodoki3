@@ -82,6 +82,20 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
     const x = useMotionValue(0);
     const swipeTimeoutRef = useRef<number | null>(null);
     const isSwipingRef = useRef(false);
+    const scheduleSwipeCompletion = React.useCallback(
+      (direction: "left" | "right") => {
+        if (swipeTimeoutRef.current !== null) {
+          clearTimeout(swipeTimeoutRef.current);
+        }
+        swipeTimeoutRef.current = window.setTimeout(() => {
+          onSwipe(direction, item);
+          setShowReaction(null);
+          isSwipingRef.current = false;
+          swipeTimeoutRef.current = null;
+        }, EXIT_DURATION_SEC * 1000);
+      },
+      [item, onSwipe]
+    );
 
     useEffect(() => {
       return () => {
@@ -111,13 +125,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
             ease: "easeOut",
           });
 
-          // アニメーション完了後にコールバック呼び出し
-          swipeTimeoutRef.current = window.setTimeout(() => {
-            onSwipe("left", item);
-            setShowReaction(null);
-            isSwipingRef.current = false;
-            swipeTimeoutRef.current = null;
-          }, EXIT_DURATION_SEC * 1000);
+          scheduleSwipeCompletion("left");
         },
         swipeRight: () => {
           if (!isTop || isSwipingRef.current) return;
@@ -135,45 +143,31 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
             ease: "easeOut",
           });
 
-          // アニメーション完了後にコールバック呼び出し
-          swipeTimeoutRef.current = window.setTimeout(() => {
-            onSwipe("right", item);
-            setShowReaction(null);
-            isSwipingRef.current = false;
-            swipeTimeoutRef.current = null;
-          }, EXIT_DURATION_SEC * 1000);
+          scheduleSwipeCompletion("right");
         },
       }),
-      [isTop, item, onSwipe, x]
+      [isTop, item, onSwipe, scheduleSwipeCompletion, x]
     );
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (!isTop || isSwipingRef.current) return;
+      if (!isTop || isSwipingRef.current || e.repeat) return;
 
       if (e.key === "ArrowLeft") {
+        e.preventDefault();
         isSwipingRef.current = true;
         flushSync(() => {
           setExitX(-EXIT_X_OFFSET_PX);
           setShowReaction("skip");
         });
-        swipeTimeoutRef.current = window.setTimeout(() => {
-          onSwipe("left", item);
-          setShowReaction(null);
-          isSwipingRef.current = false;
-          swipeTimeoutRef.current = null;
-        }, EXIT_DURATION_SEC * 1000);
+        scheduleSwipeCompletion("left");
       } else if (e.key === "ArrowRight") {
+        e.preventDefault();
         isSwipingRef.current = true;
         flushSync(() => {
           setExitX(EXIT_X_OFFSET_PX);
           setShowReaction("like");
         });
-        swipeTimeoutRef.current = window.setTimeout(() => {
-          onSwipe("right", item);
-          setShowReaction(null);
-          isSwipingRef.current = false;
-          swipeTimeoutRef.current = null;
-        }, EXIT_DURATION_SEC * 1000);
+        scheduleSwipeCompletion("right");
       }
     };
 
@@ -219,24 +213,14 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
           setShowReaction("like");
         });
         // アニメーション終了後にonSwipeを呼ぶ
-        swipeTimeoutRef.current = window.setTimeout(() => {
-          onSwipe("right", item);
-          setShowReaction(null);
-          isSwipingRef.current = false;
-          swipeTimeoutRef.current = null;
-        }, EXIT_DURATION_SEC * 1000);
+        scheduleSwipeCompletion("right");
       } else if (swipedLeft) {
         isSwipingRef.current = true;
         flushSync(() => {
           setExitX(-EXIT_X_OFFSET_PX);
           setShowReaction("skip");
         });
-        swipeTimeoutRef.current = window.setTimeout(() => {
-          onSwipe("left", item);
-          setShowReaction(null);
-          isSwipingRef.current = false;
-          swipeTimeoutRef.current = null;
-        }, EXIT_DURATION_SEC * 1000);
+        scheduleSwipeCompletion("left");
       } else {
         animate(x, 0, SNAP_BACK_SPRING);
         isSwipingRef.current = false;
