@@ -16,7 +16,7 @@ const LAST_FM_API_KEY = Deno.env.get('LAST_FM_API_KEY');
 
 interface TrackPoolRow {
     id: string;
-    artist: string;
+    artist_name: string;
 }
 
 interface LastFmArtistStats {
@@ -36,7 +36,7 @@ interface LastFmSearchResponse {
 }
 
 interface DeletedTrack {
-    artist: string;
+    artist_name: string;
     listeners: number;
 }
 
@@ -200,7 +200,7 @@ Deno.serve(async (req: Request) => {
                 new Promise<{ track: TrackPoolRow; listeners: number | null }>((resolve) =>
                     setTimeout(
                         () =>
-                            getLastFmListeners(track.artist)
+                            getLastFmListeners(track.artist_name)
                                 .then((listeners) => resolve({ track, listeners }))
                                 .catch(() => resolve({ track, listeners: null })),
                         index * RATE_LIMIT_DELAY_MS
@@ -222,10 +222,10 @@ Deno.serve(async (req: Request) => {
             if (listeners < LISTENERS_THRESHOLD) {
                 trackIdsToDelete.push(track.id);
                 deletedTracks.push({
-                    artist: track.artist,
+                    artist_name: track.artist_name,
                     listeners,
                 });
-                console.log(`[Deleted] ${track.artist} - listeners: ${listeners}`);
+                console.log(`[Deleted] ${track.artist_name} - listeners: ${listeners}`);
             }
         }
 

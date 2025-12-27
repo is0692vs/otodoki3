@@ -3,14 +3,14 @@ CREATE EXTENSION IF NOT EXISTS tsm_system_rows;
 
 -- ランダムなトラックを取得するRPC関数（cleanup-pool用）
 CREATE OR REPLACE FUNCTION get_random_tracks_for_cleanup(limit_count int DEFAULT 50)
-RETURNS TABLE (id text, artist text)
+RETURNS TABLE (id uuid, artist_name text)
 LANGUAGE sql
 VOLATILE
 SECURITY DEFINER
 SET search_path = public
 AS $$
   -- limit_countのバリデーション（1〜200の範囲に制限）
-  SELECT id, artist 
+  SELECT id, artist_name 
   FROM track_pool
   TABLESAMPLE SYSTEM_ROWS(
     CASE 
