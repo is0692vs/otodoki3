@@ -258,6 +258,9 @@ Deno.serve(async (req: Request) => {
                         `[Artist: ${artistName}] Skipped: listeners ${listeners} < ${LISTENERS_THRESHOLD}`
                     );
                     artistsSkippedByListeners += 1;
+                    if (LAST_FM_API_KEY) {
+                        await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY_MS));
+                    }
                     continue;
                 }
 
@@ -276,8 +279,9 @@ Deno.serve(async (req: Request) => {
                 console.log(`[Artist: ${artistName}] Fetched ${fetchedCount} tracks from iTunes API`);
 
                 // アーティスト名の厳密マッチングフィルタを適用
+                const lowercasedArtistName = artistName.toLowerCase();
                 const filteredItems = items.filter((item) => {
-                    return item.artistName.toLowerCase() === artistName.toLowerCase();
+                    return item.artistName?.toLowerCase() === lowercasedArtistName;
                 });
 
                 const filteredCount = filteredItems.length;
@@ -286,8 +290,8 @@ Deno.serve(async (req: Request) => {
                 );
 
                 tracksFetched += fetchedCount;
-                artistsSucceeded += 1;
 
+                let tracksAddedForArtist = 0;
                 for (const item of filteredItems) {
                     if (!item.previewUrl) {
                         tracksSkippedNoPreview += 1;
@@ -311,6 +315,11 @@ Deno.serve(async (req: Request) => {
                         },
                         fetched_at: fetchedAt,
                     });
+                    tracksAddedForArtist += 1;
+                }
+
+                if (tracksAddedForArtist > 0) {
+                    artistsSucceeded += 1;
                 }
             } catch (error) {
                 artistsFailed += 1;
