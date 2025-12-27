@@ -50,7 +50,7 @@ jobs:
 
           deployed=0
           failed=0
-          
+
           # Loop through directories in supabase/functions
           for dir in supabase/functions/*/; do
             # Skip if glob didn't match anything (e.g. empty directory)
@@ -118,7 +118,7 @@ jobs:
 
           deployed=0
           failed=0
-          
+
           # Loop through directories in supabase/functions
           for dir in supabase/functions/*/; do
             # Skip if glob didn't match anything
