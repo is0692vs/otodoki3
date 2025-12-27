@@ -5,11 +5,13 @@ on:
     paths:
       - "supabase/functions/**"
       - "supabase/migrations/**"
+      - ".github/workflows/deploy-supabase.yml"
   pull_request:
     types: [opened, reopened, synchronize]
     paths:
       - "supabase/functions/**"
       - "supabase/migrations/**"
+      - ".github/workflows/deploy-supabase.yml"
   workflow_dispatch: {}
 
 jobs:
