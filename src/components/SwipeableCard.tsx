@@ -223,6 +223,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         scheduleSwipeCompletion("left");
       } else {
         animate(x, 0, SNAP_BACK_SPRING);
+        // スナップバック時はタイマーを使わないので即時解除
         isSwipingRef.current = false;
       }
     };
