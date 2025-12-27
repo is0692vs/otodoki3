@@ -33,13 +33,19 @@ jobs:
         with:
           version: latest
 
-      - name: Deploy to Test
+      - name: Apply Migrations to Test
         run: |
-          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
-          # supabase db push --include-all  # マイグレーション変更時のみ有効化
-          supabase functions deploy refill-pool --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
-          supabase functions deploy refill-pool-artist --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
-          supabase functions deploy cleanup-pool --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
+          supabase db push --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy all Edge Functions to Test
+        run: |
+          for dir in supabase/functions/*/; do
+            func_name=$(basename "$dir")
+            echo "Deploying $func_name to TEST..."
+            supabase functions deploy "$func_name" --project-ref ${{ secrets.SUPABASE_PROJECT_REF_TEST }}
+          done
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -63,12 +69,18 @@ jobs:
         with:
           version: latest
 
-      - name: Deploy to Production
+      - name: Apply Migrations to Production
         run: |
-          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-          # supabase db push --include-all  # マイグレーション変更時のみ有効化
-          supabase functions deploy refill-pool --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-          supabase functions deploy refill-pool-artist --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-          supabase functions deploy cleanup-pool --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+          supabase db push --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy all Edge Functions to Production
+        run: |
+          for dir in supabase/functions/*/; do
+            func_name=$(basename "$dir")
+            echo "Deploying $func_name to PROD..."
+            supabase functions deploy "$func_name" --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+          done
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
