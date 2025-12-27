@@ -24,7 +24,9 @@ describe('useAutoRefill', () => {
             ok: true,
             json: async () => ({ tracks: [] }),
             text: async () => JSON.stringify({ tracks: [] }),
-            headers: new Headers({ 'content-type': 'application/json' }),
+            headers: {
+                get: (name: string) => name === 'content-type' ? 'application/json' : null
+            },
         });
     });
 
@@ -60,11 +62,13 @@ describe('useAutoRefill', () => {
         const onRefill = vi.fn();
         const newTracks = [{ track_id: '100' }, { track_id: '101' }];
 
-        mockFetch.mockResolvedValue({
+        mockFetch.mockResolvedValueOnce({
             ok: true,
             json: async () => ({ tracks: newTracks }),
             text: async () => JSON.stringify({ tracks: newTracks }),
-            headers: new Headers({ 'content-type': 'application/json' }),
+            headers: {
+                get: (name: string) => name === 'content-type' ? 'application/json' : null
+            },
         });
 
         renderHook(() => useAutoRefill(stack, onRefill));

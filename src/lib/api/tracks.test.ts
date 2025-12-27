@@ -36,6 +36,10 @@ describe('fetchRandomTracks', () => {
                 ok: true,
                 status: 200,
                 json: async () => ({ success: true, tracks: mockTracks }),
+                text: async () => JSON.stringify({ success: true, tracks: mockTracks }),
+                headers: {
+                    get: (name: string) => name === 'content-type' ? 'application/json' : null
+                },
             } as Response);
 
             const result = await fetchRandomTracks(2);
@@ -51,7 +55,7 @@ describe('fetchRandomTracks', () => {
                 status: 200,
                 json: async () => ({ success: true, tracks: [] }),
                 text: async () => JSON.stringify({ success: true, tracks: [] }),
-                headers: new Headers({ 'content-type': 'application/json' }),
+                headers: { get: (name: string) => name === 'content-type' ? 'application/json' : null },
             } as Response);
 
             await fetchRandomTracks(10);
@@ -65,7 +69,7 @@ describe('fetchRandomTracks', () => {
                 status: 200,
                 json: async () => ({ success: true, tracks: [] }),
                 text: async () => JSON.stringify({ success: true, tracks: [] }),
-                headers: new Headers({ 'content-type': 'application/json' }),
+                headers: { get: (name: string) => name === 'content-type' ? 'application/json' : null },
             } as Response);
 
             const result = await fetchRandomTracks(5);
@@ -88,7 +92,7 @@ describe('fetchRandomTracks', () => {
                 status: 200,
                 json: async () => ({ success: true, tracks: mockTracks }),
                 text: async () => JSON.stringify({ success: true, tracks: mockTracks }),
-                headers: new Headers({ 'content-type': 'application/json' }),
+                headers: { get: (name: string) => name === 'content-type' ? 'application/json' : null },
             } as Response);
 
             const result = await fetchRandomTracks(100);
@@ -104,7 +108,7 @@ describe('fetchRandomTracks', () => {
                 status: 500,
                 json: async () => ({ success: false, error: 'Internal Server Error' }),
                 text: async () => JSON.stringify({ success: false, error: 'Internal Server Error' }),
-                headers: new Headers({ 'content-type': 'application/json' }),
+                headers: { get: (name: string) => name === 'content-type' ? 'application/json' : null },
             } as Response);
 
             await expect(fetchRandomTracks(5)).rejects.toThrow('Internal Server Error');
@@ -116,7 +120,7 @@ describe('fetchRandomTracks', () => {
                 status: 200,
                 json: async () => ({ success: false, error: 'No tracks available' }),
                 text: async () => JSON.stringify({ success: false, error: 'No tracks available' }),
-                headers: new Headers({ 'content-type': 'application/json' }),
+                headers: { get: (name: string) => name === 'content-type' ? 'application/json' : null },
             } as Response);
 
             await expect(fetchRandomTracks(5)).rejects.toThrow('No tracks available');
@@ -128,7 +132,7 @@ describe('fetchRandomTracks', () => {
                 status: 404,
                 json: async () => ({ success: false }),
                 text: async () => JSON.stringify({ success: false }),
-                headers: new Headers({ 'content-type': 'application/json' }),
+                headers: { get: (name: string) => name === 'content-type' ? 'application/json' : null },
             } as Response);
 
             await expect(fetchRandomTracks(5)).rejects.toThrow('Failed to fetch tracks');
@@ -146,7 +150,7 @@ describe('fetchRandomTracks', () => {
                 status: 401,
                 json: async () => ({ success: false, error: 'Unauthorized' }),
                 text: async () => JSON.stringify({ success: false, error: 'Unauthorized' }),
-                headers: new Headers({ 'content-type': 'application/json' }),
+                headers: { get: (name: string) => name === 'content-type' ? 'application/json' : null },
             } as Response);
 
             await expect(fetchRandomTracks(5)).rejects.toThrow('Unauthorized');
@@ -158,7 +162,7 @@ describe('fetchRandomTracks', () => {
                 status: 429,
                 json: async () => ({ success: false, error: 'Too Many Requests' }),
                 text: async () => JSON.stringify({ success: false, error: 'Too Many Requests' }),
-                headers: new Headers({ 'content-type': 'application/json' }),
+                headers: { get: (name: string) => name === 'content-type' ? 'application/json' : null },
             } as Response);
 
             await expect(fetchRandomTracks(5)).rejects.toThrow('Too Many Requests');
@@ -172,7 +176,7 @@ describe('fetchRandomTracks', () => {
                 status: 200,
                 json: async () => ({ success: true, tracks: [] }),
                 text: async () => JSON.stringify({ success: true, tracks: [] }),
-                headers: new Headers({ 'content-type': 'application/json' }),
+                headers: { get: (name: string) => name === 'content-type' ? 'application/json' : null },
             } as Response);
 
             const result = await fetchRandomTracks(0);
@@ -187,7 +191,7 @@ describe('fetchRandomTracks', () => {
                 status: 200,
                 json: async () => ({ success: true, tracks: [] }),
                 text: async () => JSON.stringify({ success: true, tracks: [] }),
-                headers: new Headers({ 'content-type': 'application/json' }),
+                headers: { get: (name: string) => name === 'content-type' ? 'application/json' : null },
             } as Response);
 
             await fetchRandomTracks(-1);
@@ -215,7 +219,7 @@ describe('fetchRandomTracks', () => {
                 status: 200,
                 json: async () => ({ success: true, tracks: [mockTrack] }),
                 text: async () => JSON.stringify({ success: true, tracks: [mockTrack] }),
-                headers: new Headers({ 'content-type': 'application/json' }),
+                headers: { get: (name: string) => name === 'content-type' ? 'application/json' : null },
             } as Response);
 
             const result = await fetchRandomTracks(1);
