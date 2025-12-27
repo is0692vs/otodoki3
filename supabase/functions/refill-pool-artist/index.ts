@@ -8,6 +8,10 @@ declare const Deno: {
 const USER_AGENT = "otodoki3/1.0 (Supabase Edge Function)";
 const ITUNES_TIMEOUT_MS = 10000;
 const ARTIST_PICK_COUNT = 5;
+const LAST_FM_API_KEY = Deno.env.get('LAST_FM_API_KEY');
+const LISTENERS_THRESHOLD = 10000;
+const LAST_FM_TIMEOUT_MS = 5000;
+const RATE_LIMIT_DELAY_MS = 200;
 
 interface iTunesSearchResult {
     trackId: number;
@@ -24,6 +28,20 @@ interface iTunesSearchResult {
 interface iTunesSearchResponse {
     resultCount: number;
     results: iTunesSearchResult[];
+}
+
+interface LastFmArtistStats {
+    listeners: string;
+    playcount: string;
+}
+
+interface LastFmArtist {
+    name: string;
+    stats?: LastFmArtistStats;
+}
+
+interface LastFmSearchResponse {
+    artist?: LastFmArtist;
 }
 
 interface TrackPoolEntry {
@@ -114,6 +132,41 @@ async function fetchItunesSearchByArtist(artistName: string): Promise<iTunesSear
 }
 
 /**
+ * Last.fm API を使用してアーティストのリスナー数を取得する。
+ *
+ * @param artistName - アーティスト名
+ * @returns リスナー数。API未設定またはエラー時は null を返す。
+ */
+async function getArtistListeners(artistName: string): Promise<number | null> {
+    if (!LAST_FM_API_KEY) return null;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), LAST_FM_TIMEOUT_MS);
+
+    try {
+        const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${encodeURIComponent(artistName)}&api_key=${LAST_FM_API_KEY}&format=json`;
+        const response = await fetch(url, {
+            signal: controller.signal,
+            headers: { 'User-Agent': USER_AGENT },
+        });
+
+        if (!response.ok) {
+            console.warn(`Last.fm API returned ${response.status} for artist: ${artistName}`);
+            return null;
+        }
+
+        const data = (await response.json()) as LastFmSearchResponse;
+        const listeners = parseInt(data?.artist?.stats?.listeners ?? '0', 10);
+        return listeners;
+    } catch (error) {
+        console.warn(`Failed to fetch Last.fm data for artist: ${artistName}`, error);
+        return null;
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
+
+/**
  * 高解像度のアートワークURLを生成します。
  *
  * @param artworkUrl100 - 100x100のアートワークURL（iTunes APIの`artworkUrl100`形式）
@@ -180,64 +233,77 @@ Deno.serve(async (req: Request) => {
 
         let artistsSucceeded = 0;
         let artistsFailed = 0;
+        let artistsSkippedByListeners = 0;
 
         let tracksFetched = 0;
         let tracksSkippedNoPreview = 0;
 
         const tracksToUpsert: TrackPoolEntry[] = [];
 
-        const results = await Promise.allSettled(
-            artistNames.map(async (artistName: string) => {
-                const items = await fetchItunesSearchByArtist(artistName);
-                return { artistName, items };
-            }),
-        );
-
-        for (const settled of results) {
-            if (settled.status === 'rejected') {
-                artistsFailed += 1;
-                console.warn('Artist search failed:', settled.reason);
-                continue;
-            }
-
-            artistsSucceeded += 1;
-            const { artistName, items } = settled.value;
-            const fetchedCount = items.length;
-            console.log(`[Artist: ${artistName}] Fetched ${fetchedCount} tracks from iTunes API`);
-
-            // アーティスト名の厳密マッチングフィルタを適用
-            const filteredItems = items.filter((item) => {
-                return item.artistName.toLowerCase() === artistName.toLowerCase();
-            });
-
-            const filteredCount = filteredItems.length;
-            console.log(`[Artist: ${artistName}] After filtering: ${filteredCount} tracks (filtered out: ${fetchedCount - filteredCount})`);
-
-            tracksFetched += fetchedCount;
-
-            for (const item of filteredItems) {
-                if (!item.previewUrl) {
-                    tracksSkippedNoPreview += 1;
+        for (const artistName of artistNames) {
+            try {
+                // Last.fm でリスナー数チェック
+                const listeners = await getArtistListeners(artistName);
+                if (listeners !== null && listeners < LISTENERS_THRESHOLD) {
+                    console.log(
+                        `[Artist: ${artistName}] Skipped: listeners ${listeners} < ${LISTENERS_THRESHOLD}`
+                    );
+                    artistsSkippedByListeners += 1;
                     continue;
                 }
 
-                tracksToUpsert.push({
-                    track_id: String(item.trackId),
-                    track_name: item.trackName,
-                    artist_name: item.artistName,
-                    collection_name: item.collectionName ?? null,
-                    preview_url: item.previewUrl,
-                    artwork_url: toHighQualityArtworkUrl(item.artworkUrl100),
-                    track_view_url: item.trackViewUrl ?? null,
-                    genre: item.primaryGenreName ?? null,
-                    release_date: item.releaseDate ?? null,
-                    metadata: {
-                        source: 'itunes_search',
-                        fetched_from: 'artist',
-                        refilled_at: refilledAt,
-                    },
-                    fetched_at: fetchedAt,
+                if (listeners !== null) {
+                    console.log(`[Artist: ${artistName}] Listeners: ${listeners}`);
+                }
+
+                // レート制限対策: Last.fm API呼び出し後に待機
+                await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY_MS));
+
+                // iTunes API で楽曲を取得
+                const items = await fetchItunesSearchByArtist(artistName);
+                const fetchedCount = items.length;
+                console.log(`[Artist: ${artistName}] Fetched ${fetchedCount} tracks from iTunes API`);
+
+                // アーティスト名の厳密マッチングフィルタを適用
+                const filteredItems = items.filter((item) => {
+                    return item.artistName.toLowerCase() === artistName.toLowerCase();
                 });
+
+                const filteredCount = filteredItems.length;
+                console.log(
+                    `[Artist: ${artistName}] After filtering: ${filteredCount} tracks (filtered out: ${fetchedCount - filteredCount})`
+                );
+
+                tracksFetched += fetchedCount;
+                artistsSucceeded += 1;
+
+                for (const item of filteredItems) {
+                    if (!item.previewUrl) {
+                        tracksSkippedNoPreview += 1;
+                        continue;
+                    }
+
+                    tracksToUpsert.push({
+                        track_id: String(item.trackId),
+                        track_name: item.trackName,
+                        artist_name: item.artistName,
+                        collection_name: item.collectionName ?? null,
+                        preview_url: item.previewUrl,
+                        artwork_url: toHighQualityArtworkUrl(item.artworkUrl100),
+                        track_view_url: item.trackViewUrl ?? null,
+                        genre: item.primaryGenreName ?? null,
+                        release_date: item.releaseDate ?? null,
+                        metadata: {
+                            source: 'itunes_search',
+                            fetched_from: 'artist',
+                            refilled_at: refilledAt,
+                        },
+                        fetched_at: fetchedAt,
+                    });
+                }
+            } catch (error) {
+                artistsFailed += 1;
+                console.warn(`Artist processing failed for ${artistName}:`, error);
             }
         }
 
@@ -271,6 +337,7 @@ Deno.serve(async (req: Request) => {
                 artistsPicked: artistNames.length,
                 artistsSucceeded,
                 artistsFailed,
+                artistsSkippedByListeners,
                 tracksFetched,
                 tracksSkippedNoPreview,
                 tracksUpserted: tracksToUpsert.length,
