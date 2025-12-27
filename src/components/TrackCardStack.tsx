@@ -96,7 +96,7 @@ export function TrackCardStack({
   const [stack, setStack] = useState<CardItem[]>(initialStack);
   const { play, stop, pause, resume, isPlaying, progress } = useAudioPlayer();
   const hasUserInteractedRef = useRef(false);
-  const topCardRef = useRef<SwipeableCardRef>(null);
+  const cardRefs = useRef<Map<string, SwipeableCardRef>>(new Map());
   const lastPlayedUrlRef = useRef<string | null>(null);
 
   // 音声再生ヘルパー: URL の重複チェックと再生開始を一箇所に集約
@@ -322,12 +322,20 @@ export function TrackCardStack({
 
   const handleDislikeClick = () => {
     hasUserInteractedRef.current = true;
-    topCardRef.current?.swipeLeft();
+    const top = stack[0];
+    if (!top) return;
+    const key =
+      "type" in top && top.type === "tutorial" ? top.id : top.track_id;
+    cardRefs.current.get(key)?.swipeLeft();
   };
 
   const handleLikeClick = () => {
     hasUserInteractedRef.current = true;
-    topCardRef.current?.swipeRight();
+    const top = stack[0];
+    if (!top) return;
+    const key =
+      "type" in top && top.type === "tutorial" ? top.id : top.track_id;
+    cardRefs.current.get(key)?.swipeRight();
   };
 
   if (stack.length === 0) {
@@ -383,15 +391,21 @@ export function TrackCardStack({
             {stack.map((item, index) => {
               const isTop = index === 0;
               const isTrack = item.type === "track";
+              const key =
+                "type" in item && item.type === "tutorial"
+                  ? item.id
+                  : item.track_id;
 
               return (
                 <SwipeableCard
-                  key={
-                    "type" in item && item.type === "tutorial"
-                      ? item.id
-                      : item.track_id
-                  }
-                  ref={isTop ? topCardRef : null}
+                  key={key}
+                  ref={(node) => {
+                    if (node) {
+                      cardRefs.current.set(key, node);
+                    } else {
+                      cardRefs.current.delete(key);
+                    }
+                  }}
                   item={item}
                   isTop={isTop}
                   index={index}
