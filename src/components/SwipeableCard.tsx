@@ -148,9 +148,10 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
     );
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (!isTop) return;
+      if (!isTop || isSwipingRef.current) return;
 
       if (e.key === "ArrowLeft") {
+        isSwipingRef.current = true;
         flushSync(() => {
           setExitX(-EXIT_X_OFFSET_PX);
           setShowReaction("skip");
@@ -158,8 +159,11 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         swipeTimeoutRef.current = window.setTimeout(() => {
           onSwipe("left", item);
           setShowReaction(null);
+          isSwipingRef.current = false;
+          swipeTimeoutRef.current = null;
         }, EXIT_DURATION_SEC * 1000);
       } else if (e.key === "ArrowRight") {
+        isSwipingRef.current = true;
         flushSync(() => {
           setExitX(EXIT_X_OFFSET_PX);
           setShowReaction("like");
@@ -167,6 +171,8 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         swipeTimeoutRef.current = window.setTimeout(() => {
           onSwipe("right", item);
           setShowReaction(null);
+          isSwipingRef.current = false;
+          swipeTimeoutRef.current = null;
         }, EXIT_DURATION_SEC * 1000);
       }
     };

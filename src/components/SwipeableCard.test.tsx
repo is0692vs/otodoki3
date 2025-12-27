@@ -1,5 +1,5 @@
 import React from "react";
-import { render, cleanup, act } from "@testing-library/react";
+import { render, cleanup, act, fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { SwipeableCard, SwipeableCardRef } from "./SwipeableCard";
 
@@ -36,6 +36,30 @@ describe("SwipeableCard", () => {
 
     act(() => {
       ref.current?.swipeRight();
+    });
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(onSwipe).toHaveBeenNthCalledWith(1, "left", mockTrack);
+    expect(onSwipe).toHaveBeenNthCalledWith(2, "right", mockTrack);
+  });
+
+  it("キーボード操作でもロックが解除される", () => {
+    const onSwipe = vi.fn();
+
+    render(<SwipeableCard item={mockTrack} isTop onSwipe={onSwipe} index={0} />);
+    const card = screen.getByLabelText("Test Track by Test Artistをスワイプ");
+
+    act(() => {
+      fireEvent.keyDown(card, { key: "ArrowLeft" });
+    });
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    act(() => {
+      fireEvent.keyDown(card, { key: "ArrowRight" });
     });
     act(() => {
       vi.runAllTimers();
