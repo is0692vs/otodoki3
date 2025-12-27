@@ -38,41 +38,62 @@ async function testSwipeAction(
     const firstTopLabel = (await topSwipeable.getAttribute('aria-label')) ?? '';
     console.log('First card:', firstTopLabel);
 
-    // APIリクエストを監視（タイムアウトを長めに設定）
-    const apiPromise = page.waitForResponse(
-        response => response.url().includes(apiEndpoint) && response.request().method() === 'POST',
-        { timeout: 15000 }
-    ).catch(err => {
-        console.log('API request not captured:', err.message);
-        return null;
+    // すべてのネットワークレスポンスをキャプチャしてログ
+    const allResponses: { url: string; method: string; status: number }[] = [];
+    page.on('response', (response) => {
+        const url = response.url();
+        const method = response.request().method();
+        const status = response.status();
+        allResponses.push({ url, method, status });
+        if (method === 'POST' || url.includes('/api/')) {
+            console.log(`[Network] ${method} ${new URL(url).pathname} => ${status}`);
+        }
     });
 
+    // APIレスポンス監視の準備（クリック前に登録）
+    console.log(`[Test] Registering waitForResponse for: ${apiEndpoint}`);
+    const apiResponsePromise = page.waitForResponse(
+        response => {
+            const url = response.url();
+            const method = response.request().method();
+            const matches = url.includes(apiEndpoint) && method === 'POST';
+            if (matches) {
+                console.log(`[Test] ✓ Matched API response: ${url}`);
+            }
+            return matches;
+        },
+        { timeout: 20000 }
+    );
+
     // UI実装に合わせて確実にボタンをクリック
+    console.log(`[Test] Clicking button: "${buttonLabel}"`);
     await page.locator(`button[aria-label="${buttonLabel}"]`).click();
-    console.log(`Clicked ${buttonLabel} button`);
+    console.log(`[Test] ✓ Clicked ${buttonLabel} button`);
 
     // スワイプアニメーションが完了するまで待つ (200ms animation + 200ms buffer)
     await page.waitForTimeout(400);
 
     // APIレスポンスを待つ
-    const response = await apiPromise;
-    if (response) {
-        const responseBody = await response.json().catch(() => ({ error: 'Failed to parse JSON' }));
-        console.log('API Response:', response.status(), responseBody);
+    try {
+        const response = await apiResponsePromise;
+        console.log(`[Test] ✓ Got API response: ${response.status()} from ${response.url()}`);
 
         // APIが成功した場合のみ、次のカードが表示されることを期待
-        if (response.status() === 200) {
-            // exitアニメーションが完了し、新しいカードが表示されていることを確認
-            await expect.poll(async () => {
-                const next = await page.locator('[aria-label$="をスワイプ"]:not([aria-hidden="true"])').first().getAttribute('aria-label');
-                console.log('Current card:', next);
-                return next ?? '';
-            }, { timeout: 3000, intervals: [200] }).not.toBe(firstTopLabel);
-        } else {
+        if (!response.ok()) {
             throw new Error(`API call failed with status ${response.status()}`);
         }
-    } else {
-        throw new Error('No API response captured - API may not have been called');
+
+        // exitアニメーションが完了し、新しいカードが表示されていることを確認
+        const nextCard = await expect.poll(async () => {
+            const next = await page.locator('[aria-label$="をスワイプ"]:not([aria-hidden="true"])').first().getAttribute('aria-label');
+            return next ?? '';
+        }, { timeout: 5000, interval: 100 }).not.toBe(firstTopLabel);
+
+        console.log(`[Test] ✓ Next card displayed`);
+    } catch (err) {
+        console.error(`[Test] ✗ Test failed:`, err instanceof Error ? err.message : String(err));
+        console.log(`[Test] Network responses received:`, allResponses.map(r => `${r.method} ${r.url} (${r.status})`));
+        throw err;
     }
 }
 
