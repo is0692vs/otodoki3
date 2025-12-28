@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { SupabaseClient } from '@supabase/supabase-js';
 
-async function verifyPlaylistOwnership(supabase: any, playlistId: string, userId: string) {
+async function verifyPlaylistOwnership(supabase: SupabaseClient, playlistId: string, userId: string) {
     const { data: playlist, error } = await supabase
         .from('playlists')
         .select('id')
