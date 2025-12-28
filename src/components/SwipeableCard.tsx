@@ -270,14 +270,22 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
           {showReaction && (
             <motion.div
               className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0, scale: 0.5, rotate: showReaction === "like" ? 15 : -15 }}
+              initial={{
+                opacity: 0,
+                scale: 0.5,
+                rotate: showReaction === "like" ? 15 : -15,
+              }}
               animate={{ opacity: 1, scale: 1.5, rotate: 0 }}
               exit={{ opacity: 0, scale: 2, filter: "blur(10px)" }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
-              <div className={`flex h-32 w-32 items-center justify-center rounded-full glass ${
-                showReaction === "like" ? "bg-red-500/20 border-red-500/50" : "bg-white/10 border-white/30"
-              }`}>
+              <div
+                className={`flex h-32 w-32 items-center justify-center rounded-full glass ${
+                  showReaction === "like"
+                    ? "bg-red-500/20 border-red-500/50"
+                    : "bg-white/10 border-white/30"
+                }`}
+              >
                 {showReaction === "like" ? (
                   <Heart
                     className="h-16 w-16 text-red-500 fill-current drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]"
@@ -308,15 +316,21 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-10"
             aria-label={isPlaying ? "一時停止" : "再生"}
           >
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               className="flex h-20 w-20 items-center justify-center rounded-full glass bg-white/10 text-white transition-colors hover:bg-white/20"
             >
               {isPlaying ? (
-                <Pause className="h-10 w-10 fill-current" aria-label="一時停止" />
+                <Pause
+                  className="h-10 w-10 fill-current"
+                  aria-label="一時停止"
+                />
               ) : (
-                <Play className="h-10 w-10 fill-current ml-1" aria-label="再生" />
+                <Play
+                  className="h-10 w-10 fill-current ml-1"
+                  aria-label="再生"
+                />
               )}
             </motion.div>
           </button>

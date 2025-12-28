@@ -96,20 +96,23 @@
   }
   body {
     @apply bg-background text-foreground min-h-screen;
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(147, 51, 234, 0.15) 0px, transparent 50%);
+    background-image: radial-gradient(
+        at 0% 0%,
+        rgba(59, 130, 246, 0.15) 0px,
+        transparent 50%
+      ),
+      radial-gradient(
+        at 100% 100%,
+        rgba(147, 51, 234, 0.15) 0px,
+        transparent 50%
+      );
     background-attachment: fixed;
   }
 }
 
 /* Glassmorphism Utilities */
 .glass {
-  @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)];
-}
-
-.dark .glass {
-  @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+  @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] dark:bg-black/40 dark:border-white/10 dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
 }
 
 .glass-morphism {

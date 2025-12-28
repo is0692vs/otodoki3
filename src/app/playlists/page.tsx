@@ -62,7 +62,9 @@ export default function PlaylistsPage() {
       <div className="min-h-full bg-zinc-950 text-white p-6 pb-24">
         <header className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">ライブラリ</h1>
-          <p className="text-zinc-400 text-sm mt-1">保存した曲やスキップした曲</p>
+          <p className="text-zinc-400 text-sm mt-1">
+            保存した曲やスキップした曲
+          </p>
         </header>
 
         <div className="grid gap-4">

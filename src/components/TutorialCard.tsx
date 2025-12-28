@@ -46,7 +46,9 @@ export function TutorialCard({
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-800 border border-white/5 shadow-inner">
               <ArrowLeft className="h-6 w-6 text-zinc-500" />
             </div>
-            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">{leftText}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+              {leftText}
+            </p>
           </div>
 
           <div className="h-px flex-1 bg-linear-to-r from-transparent via-zinc-800 to-transparent" />
@@ -55,7 +57,9 @@ export function TutorialCard({
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600/20 border border-blue-500/20 shadow-lg shadow-blue-900/20">
               <ArrowRight className="h-6 w-6 text-blue-400" />
             </div>
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-400">{rightText}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-400">
+              {rightText}
+            </p>
           </div>
         </div>
 

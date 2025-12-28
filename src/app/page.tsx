@@ -47,7 +47,9 @@ export default function Home() {
     if (!tracks || tracks.length === 0) {
       return (
         <div className="glass flex h-[min(110vw,440px)] w-[min(85vw,340px)] items-center justify-center rounded-3xl border border-white/10 bg-white/5 text-foreground">
-          <p className="text-sm font-medium opacity-60">楽曲が見つかりませんでした</p>
+          <p className="text-sm font-medium opacity-60">
+            楽曲が見つかりませんでした
+          </p>
         </div>
       );
     }

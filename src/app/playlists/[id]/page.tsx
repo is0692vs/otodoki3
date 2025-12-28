@@ -26,15 +26,21 @@ export default function PlaylistDetailPage() {
 
   const playlistMeta =
     id === "likes"
-      ? { name: "お気に入り", icon: <Heart className="h-6 w-6 text-red-500 fill-current" /> }
-      : { name: "スキップ済み", icon: <Ban className="h-6 w-6 text-zinc-400" /> };
+      ? {
+          name: "お気に入り",
+          icon: <Heart className="h-6 w-6 text-red-500 fill-current" />,
+        }
+      : {
+          name: "スキップ済み",
+          icon: <Ban className="h-6 w-6 text-zinc-400" />,
+        };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await fetch(`/api/playlists/${id}`);
 
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === "development") {
           console.log("=== Playlist Detail Fetch ===");
           console.log("Status:", res.status);
           console.log("OK:", res.ok);
@@ -52,7 +58,7 @@ export default function PlaylistDetailPage() {
 
         const responseData = await res.json();
 
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === "development") {
           console.log("Response data:", responseData);
           console.log("Tracks:", responseData.tracks);
           console.log("Tracks length:", responseData.tracks?.length);
@@ -127,7 +133,9 @@ export default function PlaylistDetailPage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900">
                   {playlistMeta.icon}
                 </div>
-                <h1 className="text-3xl font-bold tracking-tight">{playlistMeta.name}</h1>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  {playlistMeta.name}
+                </h1>
               </div>
             </div>
 
@@ -153,7 +161,9 @@ export default function PlaylistDetailPage() {
                   type="button"
                   onClick={() => handlePlay(track)}
                   className={`group flex items-center gap-4 w-full p-2 rounded-xl transition-all active:scale-[0.99] ${
-                    playingId === track.track_id ? "bg-white/10" : "hover:bg-white/5"
+                    playingId === track.track_id
+                      ? "bg-white/10"
+                      : "hover:bg-white/5"
                   }`}
                 >
                   <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-zinc-900">
@@ -171,7 +181,13 @@ export default function PlaylistDetailPage() {
                     )}
                   </div>
                   <div className="flex-1 text-left min-w-0">
-                    <p className={`font-medium truncate ${playingId === track.track_id ? "text-blue-400" : "text-white"}`}>
+                    <p
+                      className={`font-medium truncate ${
+                        playingId === track.track_id
+                          ? "text-blue-400"
+                          : "text-white"
+                      }`}
+                    >
                       {track.track_name}
                     </p>
                     <p className="text-sm text-zinc-400 truncate">
