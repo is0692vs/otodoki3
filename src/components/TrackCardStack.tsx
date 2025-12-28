@@ -94,7 +94,8 @@ export function TrackCardStack({
   ];
 
   const [stack, setStack] = useState<CardItem[]>(initialStack);
-  const { play, stop, pause, resume, isPlaying, progress } = useAudioPlayer();
+  const { play, stop, pause, resume, isPlaying, progress, preload } =
+    useAudioPlayer();
   const hasUserInteractedRef = useRef(false);
   const cardRefs = useRef<Map<string, SwipeableCardRef>>(new Map());
   const lastPlayedUrlRef = useRef<string | null>(null);
@@ -174,6 +175,17 @@ export function TrackCardStack({
     // this effect on every stack change. We only want to run when the top card changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stack[0], play]);
+
+  useEffect(() => {
+    const nextCard = stack[1];
+    if (!nextCard || !("track_id" in nextCard) || !nextCard.preview_url) return;
+
+    preload(nextCard.preview_url);
+    // NOTE: We intentionally depend on stack[0] (top card) rather than stack,
+    // to avoid re-running on every stack mutation. We only want to preload when
+    // the top card changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stack[0], preload]);
 
   const swipeTop = (direction: SwipeDirection, item: CardItem) => {
     // ユーザージェスチャー内で同期的に停止（自動再生ポリシー対策）

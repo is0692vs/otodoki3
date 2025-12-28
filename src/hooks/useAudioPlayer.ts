@@ -9,6 +9,7 @@ type AudioPlayerState = {
 
 export function useAudioPlayer() {
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const preloadAudioRef = useRef<HTMLAudioElement | null>(null);
     const [state, setState] = useState<AudioPlayerState>({
         isPlaying: false,
         progress: 0,
@@ -74,6 +75,61 @@ export function useAudioPlayer() {
         },
         [stop]
     );
+
+    const preload = useCallback((previewUrl: string) => {
+        const trimmed = previewUrl.trim();
+        if (!trimmed) return;
+
+        if (!preloadAudioRef.current) {
+            preloadAudioRef.current = new Audio();
+        }
+
+        const audio = preloadAudioRef.current;
+        audio.preload = "auto";
+        audio.volume = 0;
+
+        // If we're switching URLs, abort any in-flight request first.
+        try {
+            if (audio.src && audio.src !== trimmed) {
+                audio.pause();
+                audio.src = "";
+                audio.load();
+            }
+        } catch (err) {
+            console.error("Failed to abort previous preload", err, { src: audio?.src });
+            // Best-effort to leave the element in a safe state
+            try {
+                audio.pause();
+            } catch (_) {
+                /* ignore */
+            }
+            try {
+                audio.src = "";
+            } catch (_) {
+                /* ignore */
+            }
+        }
+
+        try {
+            if (audio.src !== trimmed) {
+                audio.src = trimmed;
+                audio.load();
+            }
+        } catch (err) {
+            console.error("Failed to preload audio", err, { src: trimmed });
+            // Ensure the element is not pointing to a broken src
+            try {
+                audio.pause();
+            } catch (_) {
+                /* ignore */
+            }
+            try {
+                audio.src = "";
+            } catch (_) {
+                /* ignore */
+            }
+        }
+    }, []);
 
     useEffect(() => {
         if (audioRef.current) return;
@@ -143,11 +199,20 @@ export function useAudioPlayer() {
             audio.removeEventListener("play", handlePlay);
             audio.removeEventListener("pause", handlePause);
             audioRef.current = null;
+
+            const preloadAudio = preloadAudioRef.current;
+            if (preloadAudio) {
+                preloadAudio.pause();
+                preloadAudio.src = "";
+                preloadAudio.load();
+                preloadAudioRef.current = null;
+            }
         };
     }, [stop]);
 
     return {
         audioRef,
+        preload,
         play,
         stop,
         pause,
