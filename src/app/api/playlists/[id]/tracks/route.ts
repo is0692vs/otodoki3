@@ -46,7 +46,7 @@ export async function POST(
         .eq('playlist_id', id)
         .order('position', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
     const nextPosition = (maxPosData?.position ?? -1) + 1;
 
@@ -60,6 +60,9 @@ export async function POST(
 
     if (error) {
         console.error('Error adding track to playlist:', error);
+        if (error.code === '23505') { // Unique violation
+            return NextResponse.json({ error: 'Track already in playlist' }, { status: 409 });
+        }
         return NextResponse.json({ error: 'Failed to add track' }, { status: 500 });
     }
 

@@ -29,7 +29,7 @@ export async function GET() {
         id: p.id,
         name: p.title,
         icon: '🎵',
-        count: p.playlist_tracks?.[0]?.count ?? 0,
+        count: (p.playlist_tracks as any)?.[0]?.count ?? 0,
         is_default: false
     })) ?? [];
 
