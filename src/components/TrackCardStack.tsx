@@ -178,12 +178,14 @@ export function TrackCardStack({
 
   useEffect(() => {
     const nextCard = stack[1];
-    if (!nextCard) return;
-    if (!("track_id" in nextCard)) return;
-    if (!nextCard.preview_url) return;
+    if (!nextCard || !("track_id" in nextCard) || !nextCard.preview_url) return;
 
     preload(nextCard.preview_url);
-  }, [stack[0]?.track_id, preload]);
+    // NOTE: We intentionally depend on stack[0] (top card) rather than stack,
+    // to avoid re-running on every stack mutation. We only want to preload when
+    // the top card changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stack[0], preload]);
 
   const swipeTop = (direction: SwipeDirection, item: CardItem) => {
     // ユーザージェスチャー内で同期的に停止（自動再生ポリシー対策）

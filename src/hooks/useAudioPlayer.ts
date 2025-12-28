@@ -88,6 +88,13 @@ export function useAudioPlayer() {
         audio.preload = "auto";
         audio.volume = 0;
 
+        // If we're switching URLs, abort any in-flight request first.
+        if (audio.src && audio.src !== trimmed) {
+            audio.pause();
+            audio.src = "";
+            audio.load();
+        }
+
         if (audio.src !== trimmed) {
             audio.src = trimmed;
             audio.load();
@@ -167,6 +174,7 @@ export function useAudioPlayer() {
             if (preloadAudio) {
                 preloadAudio.pause();
                 preloadAudio.src = "";
+                preloadAudio.load();
                 preloadAudioRef.current = null;
             }
         };
