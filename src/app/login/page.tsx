@@ -89,7 +89,7 @@ export default function LoginPage() {
             otodoki3
           </h1>
           <p className="text-sm font-medium tracking-widest text-white/40 uppercase">
-            {isSignUp ? "Create Account" : "Welcome Back"}
+            {isSignUp ? "アカウント作成" : "おかえりなさい"}
           </p>
         </div>
 
@@ -106,13 +106,13 @@ export default function LoginPage() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
-            Continue with Google
+            Googleで続行
           </button>
 
           <div className="relative flex items-center py-2">
             <div className="flex-grow border-t border-white/10"></div>
             <span className="flex-shrink mx-4 text-xs font-bold text-white/20 uppercase tracking-widest">
-              or
+              または
             </span>
             <div className="flex-grow border-t border-white/10"></div>
           </div>
@@ -121,7 +121,7 @@ export default function LoginPage() {
             <div className="space-y-2">
               <input
                 type="email"
-                placeholder="Email address"
+                placeholder="メールアドレス"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -129,7 +129,7 @@ export default function LoginPage() {
               />
               <input
                 type="password"
-                placeholder="Password"
+                placeholder="パスワード"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -155,10 +155,10 @@ export default function LoginPage() {
               className="w-full py-4 rounded-2xl bg-blue-600 text-white font-bold shadow-xl shadow-blue-600/20 transition-all duration-300 hover:bg-blue-500 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
             >
               {loading
-                ? "Processing..."
+                ? "処理中..."
                 : isSignUp
-                ? "Create Account"
-                : "Sign In"}
+                ? "アカウント作成"
+                : "ログイン"}
             </button>
           </form>
         </div>
@@ -174,11 +174,11 @@ export default function LoginPage() {
             className="text-sm font-bold text-white/40 hover:text-white/60 transition-colors"
           >
             {isSignUp
-              ? "Already have an account? Sign In"
-              : "Don't have an account? Create one"}
+              ? "アカウントをお持ちですか？ ログイン"
+              : "アカウントをお持ちでないですか？ 新規登録"}
           </button>
           <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">
-            Closed Beta • Invited Users Only
+            クローズドベータ • 招待ユーザーのみ
           </p>
         </div>
       </div>

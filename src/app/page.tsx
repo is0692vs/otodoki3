@@ -64,10 +64,10 @@ export default function Home() {
           <header className="w-[min(85vw,340px)]">
             <div className="space-y-1">
               <h1 className="bg-gradient-to-br from-white to-white/60 bg-clip-text text-3xl font-black tracking-tight text-transparent">
-                Discovery
+                ディスカバリー
               </h1>
               <p className="text-xs font-medium tracking-wider text-white/40 uppercase">
-                Swipe to explore new music
+                スワイプして新しい音楽を探す
               </p>
             </div>
           </header>

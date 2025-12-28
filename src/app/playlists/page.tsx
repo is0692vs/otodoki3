@@ -51,7 +51,7 @@ export default function PlaylistsPage() {
   if (loading)
     return (
       <Layout>
-        <div className="bg-black text-white flex items-center justify-center">
+        <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
           読み込み中...
         </div>
       </Layout>
@@ -59,7 +59,7 @@ export default function PlaylistsPage() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-zinc-950 text-white p-6 pb-24">
+      <div className="min-h-full p-6 pb-24">
         <header className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">ライブラリ</h1>
           <p className="text-zinc-400 text-sm mt-1">
