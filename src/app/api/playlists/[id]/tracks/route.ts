@@ -1,6 +1,17 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
+async function verifyPlaylistOwnership(supabase: any, playlistId: string, userId: string) {
+    const { data: playlist, error } = await supabase
+        .from('playlists')
+        .select('id')
+        .eq('id', playlistId)
+        .eq('user_id', userId)
+        .single();
+
+    return { playlist, error };
+}
+
 export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -21,12 +32,7 @@ export async function POST(
     }
 
     // Verify playlist ownership
-    const { data: playlist, error: playlistError } = await supabase
-        .from('playlists')
-        .select('id')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
+    const { playlist, error: playlistError } = await verifyPlaylistOwnership(supabase, id, user.id);
 
     if (playlistError || !playlist) {
         return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
@@ -79,12 +85,7 @@ export async function DELETE(
     }
 
     // Verify playlist ownership
-    const { data: playlist, error: playlistError } = await supabase
-        .from('playlists')
-        .select('id')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
+    const { playlist, error: playlistError } = await verifyPlaylistOwnership(supabase, id, user.id);
 
     if (playlistError || !playlist) {
         return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
@@ -123,12 +124,7 @@ export async function PATCH(
     }
 
     // Verify playlist ownership
-    const { data: playlist, error: playlistError } = await supabase
-        .from('playlists')
-        .select('id')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
+    const { playlist, error: playlistError } = await verifyPlaylistOwnership(supabase, id, user.id);
 
     if (playlistError || !playlist) {
         return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
@@ -143,7 +139,13 @@ export async function PATCH(
             .eq('track_id', trackId)
     );
 
-    await Promise.all(updates);
+    const results = await Promise.all(updates);
+    const errors = results.filter(r => r.error);
+
+    if (errors.length > 0) {
+        console.error('Failed to update some track positions:', errors);
+        return NextResponse.json({ error: 'Failed to update order completely' }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
 }

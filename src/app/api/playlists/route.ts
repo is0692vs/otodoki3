@@ -13,7 +13,7 @@ export async function GET() {
     const [likesCount, dislikesCount, userPlaylists] = await Promise.all([
         supabase.from('likes').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('dislikes').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('playlists').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('playlists').select('*, playlist_tracks(count)').eq('user_id', user.id).order('created_at', { ascending: false }),
     ]);
 
     if (likesCount.error) console.error('Failed to count likes:', likesCount.error);
@@ -29,28 +29,10 @@ export async function GET() {
         id: p.id,
         name: p.title,
         icon: '🎵',
-        count: 0, // TODO: Count tracks for each playlist. For now 0 or fetch separately.
+        // @ts-ignore: Supabase join count type inference
+        count: p.playlist_tracks?.[0]?.count ?? 0,
         is_default: false
     })) ?? [];
-
-    // Fetch track counts for custom playlists
-    if (customPlaylists.length > 0) {
-        const { data: trackCounts, error: trackCountsError } = await supabase
-            .from('playlist_tracks')
-            .select('playlist_id')
-            .in('playlist_id', customPlaylists.map(p => p.id));
-
-        if (!trackCountsError && trackCounts) {
-            const counts = trackCounts.reduce((acc, curr) => {
-                acc[curr.playlist_id] = (acc[curr.playlist_id] || 0) + 1;
-                return acc;
-            }, {} as Record<string, number>);
-
-            customPlaylists.forEach(p => {
-                p.count = counts[p.id] || 0;
-            });
-        }
-    }
 
     return NextResponse.json({
         playlists: [...defaultPlaylists, ...customPlaylists],

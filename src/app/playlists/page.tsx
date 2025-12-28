@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Heart, Ban, ChevronRight, Plus, Music, X } from "lucide-react";
@@ -21,6 +21,9 @@ const PlaylistIcon = ({ id, icon }: { id: string; icon?: string }) => {
     case "dislikes":
       return <Ban className="h-6 w-6 text-zinc-400" />;
     default:
+      if (icon && icon !== "🎵") {
+        return <span className="text-2xl">{icon}</span>;
+      }
       return <Music className="h-6 w-6 text-zinc-400" />;
   }
 };
@@ -33,7 +36,7 @@ export default function PlaylistsPage() {
   const [creating, setCreating] = useState(false);
   const router = useRouter();
 
-  const fetchPlaylists = async () => {
+  const fetchPlaylists = useCallback(async () => {
     try {
       const res = await fetch("/api/playlists");
       if (res.status === 401 || res.status === 403) {
@@ -51,11 +54,21 @@ export default function PlaylistsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     fetchPlaylists();
-  }, [router]);
+  }, [fetchPlaylists]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsModalOpen(false);
+    };
+    if (isModalOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen]);
 
   const handleCreatePlaylist = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +118,7 @@ export default function PlaylistsPage() {
             </p>
           </div>
           <button
+            type="button"
             onClick={() => setIsModalOpen(true)}
             className="p-2 bg-white text-black rounded-full hover:bg-zinc-200 transition-colors"
             aria-label="Create Playlist"
@@ -140,6 +154,7 @@ export default function PlaylistsPage() {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold">新規プレイリスト作成</h2>
                 <button
+                  type="button"
                   onClick={() => setIsModalOpen(false)}
                   className="text-zinc-400 hover:text-white transition-colors"
                 >

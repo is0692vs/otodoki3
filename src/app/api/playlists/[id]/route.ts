@@ -13,9 +13,10 @@ export async function GET(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (id === 'likes') {
+    if (id === 'likes' || id === 'dislikes') {
+        const table = id === 'likes' ? 'likes' : 'dislikes';
         const { data: tracks, error } = await supabase
-            .from('likes')
+            .from(table)
             .select(`
         *,
         track:track_pool(*)
@@ -24,33 +25,10 @@ export async function GET(
             .order('created_at', { ascending: false });
 
         if (error) {
-            return NextResponse.json({ error: 'Failed to fetch likes' }, { status: 500 });
+            return NextResponse.json({ error: `Failed to fetch ${id}` }, { status: 500 });
         }
 
-        const formattedTracks = tracks?.map(t => ({
-            ...t.track,
-        })) || [];
-
-        return NextResponse.json({ tracks: formattedTracks });
-    }
-
-    if (id === 'dislikes') {
-        const { data: tracks, error } = await supabase
-            .from('dislikes')
-            .select(`
-        *,
-        track:track_pool(*)
-      `)
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            return NextResponse.json({ error: 'Failed to fetch dislikes' }, { status: 500 });
-        }
-
-        const formattedTracks = tracks?.map(t => ({
-            ...t.track,
-        })) || [];
+        const formattedTracks = tracks?.map(t => t.track).filter(t => t !== null) || [];
 
         return NextResponse.json({ tracks: formattedTracks });
     }
@@ -85,7 +63,7 @@ export async function GET(
         playlist_track_id: t.id,
         position: t.position,
         added_at: t.added_at
-    })) || [];
+    })).filter(t => t.id !== undefined) || []; // Filter out any potential null joins
 
     return NextResponse.json({ playlist, tracks: formattedTracks });
 }
@@ -100,6 +78,10 @@ export async function PATCH(
 
     if (authError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (id === 'likes' || id === 'dislikes') {
+        return NextResponse.json({ error: 'Cannot update default playlists' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -132,6 +114,20 @@ export async function DELETE(
 
     if (authError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (id === 'likes' || id === 'dislikes') {
+        return NextResponse.json({ error: 'Cannot delete default playlists' }, { status: 403 });
+    }
+
+    // Delete tracks first to avoid FK constraints if cascade is not set
+    const { error: tracksError } = await supabase
+        .from('playlist_tracks')
+        .delete()
+        .eq('playlist_id', id);
+
+    if (tracksError) {
+        return NextResponse.json({ error: 'Failed to delete playlist tracks' }, { status: 500 });
     }
 
     const { error } = await supabase
