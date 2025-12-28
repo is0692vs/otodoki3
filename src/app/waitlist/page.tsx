@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Music } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "./sign-out-button";
@@ -27,7 +28,9 @@ export default async function WaitlistPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="max-w-md w-full text-center bg-white p-8 rounded-xl shadow-lg">
-        <div className="text-6xl mb-4">🎵</div>
+        <div className="mb-4 flex justify-center">
+          <Music className="h-16 w-16 text-blue-500" />
+        </div>
         <h1 className="text-2xl font-bold mb-2">ウェイトリスト</h1>
         <p className="text-gray-600 mb-6">
           otodoki3 は現在クローズドベータ中です。

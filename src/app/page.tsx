@@ -23,11 +23,11 @@ export default function Home() {
     if (isLoading) {
       return (
         <div
-          className="flex h-[70vh] max-h-140 w-[92vw] max-w-sm items-center justify-center rounded-3xl border border-black/8 bg-background dark:border-white/15"
+          className="glass flex h-[min(110vw,440px)] w-[min(85vw,340px)] items-center justify-center rounded-3xl border border-white/10 bg-white/5"
           role="status"
           aria-live="polite"
         >
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
           <span className="sr-only">読み込み中</span>
         </div>
       );
@@ -35,10 +35,10 @@ export default function Home() {
 
     if (isError) {
       return (
-        <div className="w-[92vw] max-w-sm rounded-2xl border border-black/8 bg-background p-4 text-sm dark:border-white/15">
-          <p className="font-semibold">エラー</p>
-          <p className="mt-1 opacity-80">
-            {error instanceof Error ? error.message : "Failed"}
+        <div className="glass w-[min(85vw,340px)] rounded-3xl border border-red-500/20 bg-red-500/5 p-8 text-center">
+          <p className="text-lg font-bold text-red-400">エラーが発生しました</p>
+          <p className="mt-2 text-sm text-red-400/60">
+            {error instanceof Error ? error.message : "Failed to load tracks"}
           </p>
         </div>
       );
@@ -46,8 +46,10 @@ export default function Home() {
 
     if (!tracks || tracks.length === 0) {
       return (
-        <div className="flex h-[70vh] max-h-140 w-[92vw] max-w-sm items-center justify-center rounded-3xl border border-black/8 bg-background text-foreground dark:border-white/15">
-          <p className="text-sm opacity-80">楽曲がありません</p>
+        <div className="glass flex h-[min(110vw,440px)] w-[min(85vw,340px)] items-center justify-center rounded-3xl border border-white/10 bg-white/5 text-foreground">
+          <p className="text-sm font-medium opacity-60">
+            楽曲が見つかりませんでした
+          </p>
         </div>
       );
     }
@@ -57,13 +59,15 @@ export default function Home() {
 
   return (
     <Layout>
-      <div className="flex items-center justify-center bg-background text-foreground">
-        <main className="flex w-full flex-col items-center gap-6 py-10">
-          <header className="w-[92vw] max-w-sm">
-            <div>
-              <h1 className="text-xl font-bold">ディスカバリー</h1>
-              <p className="mt-1 text-sm opacity-70">
-                右スワイプ: Like / 左スワイプ: Skip
+      <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-background text-foreground">
+        <main className="flex w-full flex-col items-center gap-8 py-8">
+          <header className="w-[min(85vw,340px)]">
+            <div className="space-y-1">
+              <h1 className="bg-gradient-to-br from-white to-white/60 bg-clip-text text-3xl font-black tracking-tight text-transparent">
+                ディスカバリー
+              </h1>
+              <p className="text-xs font-medium tracking-wider text-white/40 uppercase">
+                スワイプして新しい音楽を探す
               </p>
             </div>
           </header>

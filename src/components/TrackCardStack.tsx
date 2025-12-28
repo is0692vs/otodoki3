@@ -2,6 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Heart, X, Music, Sparkles } from "lucide-react";
 
 import type { Track, CardItem } from "../types/track-pool";
 import { useAudioPlayer } from "../hooks/useAudioPlayer";
@@ -352,14 +353,20 @@ export function TrackCardStack({
 
   if (stack.length === 0) {
     const emptyMessage =
-      mode === "playlist"
-        ? "すべての曲を評価しました ✨"
-        : "今日のディスカバリーはここまで 🎵";
+      mode === "playlist" ? (
+        <span className="flex items-center gap-2">
+          すべての曲を評価しました <Sparkles className="h-4 w-4" />
+        </span>
+      ) : (
+        <span className="flex items-center gap-2">
+          今日のディスカバリーはここまで <Music className="h-4 w-4" />
+        </span>
+      );
 
     return (
       <div className="flex flex-col items-center gap-8">
-        <div className="flex h-[min(85vw,340px)] w-[min(85vw,340px)] items-center justify-center rounded-3xl border border-black/8 bg-background text-foreground dark:border-white/15">
-          <p className="text-sm opacity-80">{emptyMessage}</p>
+        <div className="glass flex h-[min(85vw,340px)] w-[min(85vw,340px)] items-center justify-center rounded-3xl border border-white/10 bg-white/5 text-foreground">
+          <p className="text-sm font-medium opacity-60">{emptyMessage}</p>
         </div>
       </div>
     );
@@ -373,16 +380,16 @@ export function TrackCardStack({
         {error && (
           <div
             role="alert"
-            className="fixed bottom-4 right-4 flex items-center gap-2 rounded-lg bg-red-500/90 px-4 py-2 text-sm text-white"
+            className="fixed bottom-24 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-red-500/90 px-6 py-3 text-sm font-medium text-white shadow-lg backdrop-blur-md md:bottom-8"
           >
             補充に失敗しました
             <button
               type="button"
               onClick={() => clearError()}
-              className="ml-2 text-white/80 hover:text-white"
+              className="ml-2 rounded-full p-1 hover:bg-white/20"
               aria-label="エラーを閉じる"
             >
-              ✕
+              <X className="h-4 w-4" />
             </button>
           </div>
         )}
@@ -391,7 +398,7 @@ export function TrackCardStack({
         {!error && isRefilling && (
           <div
             role="status"
-            className="fixed bottom-4 right-4 rounded-full bg-black/80 px-4 py-2 text-sm text-white"
+            className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-white/10 px-6 py-3 text-sm font-medium text-white shadow-lg backdrop-blur-md md:bottom-8"
           >
             楽曲を補充中...
           </div>
@@ -436,47 +443,29 @@ export function TrackCardStack({
       </div>
 
       {/* Like/Dislikeボタン - カードの外側（下）に配置 */}
-      <div className="flex items-center justify-center gap-8">
+      <div className="flex items-center justify-center gap-12">
         <button
           type="button"
           onClick={handleDislikeClick}
           disabled={actionInProgress}
-          className={`flex h-16 w-16 items-center justify-center rounded-lg shadow-md hover:shadow-lg transition-all duration-200 active:scale-95 bg-gray-200 hover:bg-gray-300 text-gray-800 ${
+          className={`group flex h-20 w-20 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white shadow-xl backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:scale-110 active:scale-90 ${
             actionInProgress ? "opacity-50 cursor-not-allowed" : ""
           }`}
           aria-label="よくない"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-8 w-8"
-          >
-            <path
-              fillRule="evenodd"
-              d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z"
-              clipRule="evenodd"
-            />
-          </svg>
+          <X className="h-10 w-10 transition-transform group-hover:rotate-90" />
         </button>
 
         <button
           type="button"
           onClick={handleLikeClick}
           disabled={actionInProgress}
-          className={`flex h-16 w-16 items-center justify-center rounded-lg shadow-md hover:shadow-lg transition-all duration-200 active:scale-95 bg-blue-600 hover:bg-blue-700 text-white ${
+          className={`group flex h-20 w-20 items-center justify-center rounded-full border border-blue-500/30 bg-blue-600/20 text-blue-400 shadow-xl backdrop-blur-md transition-all duration-300 hover:bg-blue-600/30 hover:scale-110 active:scale-90 ${
             actionInProgress ? "opacity-50 cursor-not-allowed" : ""
           }`}
           aria-label="いいね"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-8 w-8"
-          >
-            <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
-          </svg>
+          <Heart className="h-10 w-10 transition-transform group-hover:scale-125 fill-current" />
         </button>
       </div>
     </div>

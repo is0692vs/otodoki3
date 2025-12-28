@@ -11,10 +11,13 @@ export function AudioProgressBar({ progress }: AudioProgressBarProps) {
 
   return (
     <div
-      className="pointer-events-none h-0.5 w-full bg-black/10 dark:bg-white/15"
+      className="pointer-events-none h-1 w-full bg-white/10"
       aria-hidden="true"
     >
-      <div className="h-full bg-foreground" style={{ width: `${clamped}%` }} />
+      <div
+        className="h-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-300 ease-linear"
+        style={{ width: `${clamped}%` }}
+      />
     </div>
   );
 }

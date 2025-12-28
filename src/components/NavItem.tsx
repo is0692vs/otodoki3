@@ -25,24 +25,23 @@ export function NavItem(props: Props) {
   const { icon, label, isActive } = props;
 
   const baseClasses =
-    "relative flex flex-col items-center justify-center gap-1 rounded-lg px-3 py-2 transition-all duration-200 md:flex-row md:justify-start md:gap-3";
+    "relative flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2 transition-all duration-200 active:scale-90 md:flex-row md:justify-start md:gap-3";
 
   const activeClasses = isActive
-    ? "text-blue-600"
-    : "text-foreground/70 hover:text-foreground";
-
-  const indicatorClasses = `after:absolute after:content-[''] after:rounded-full ${
-    isActive ? "after:bg-blue-600" : "after:bg-transparent"
-  } after:bottom-0 after:left-1/2 after:h-0.5 after:w-6 after:-translate-x-1/2 md:after:bottom-auto md:after:left-0 md:after:top-1/2 md:after:h-6 md:after:w-0.5 md:after:-translate-y-1/2 md:after:translate-x-0`;
+    ? "text-blue-400 bg-white/5"
+    : "text-zinc-500 hover:text-zinc-300";
 
   const content = (
     <>
       <span aria-hidden className="text-xl leading-none md:text-lg">
         {icon}
       </span>
-      <span className="text-[11px] font-medium leading-none md:text-sm">
+      <span className="text-[10px] font-bold uppercase tracking-wider leading-none md:text-sm">
         {label}
       </span>
+      {isActive && (
+        <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-blue-400 md:hidden" />
+      )}
     </>
   );
 
@@ -51,7 +50,7 @@ export function NavItem(props: Props) {
       <button
         type="button"
         onClick={props.onClick}
-        className={`${baseClasses} ${activeClasses} ${indicatorClasses}`}
+        className={`${baseClasses} ${activeClasses}`}
       >
         {content}
       </button>
@@ -62,7 +61,7 @@ export function NavItem(props: Props) {
     <Link
       href={props.href}
       aria-current={isActive ? "page" : undefined}
-      className={`${baseClasses} ${activeClasses} ${indicatorClasses}`}
+      className={`${baseClasses} ${activeClasses}`}
     >
       {content}
     </Link>
