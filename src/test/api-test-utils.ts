@@ -11,6 +11,7 @@ export type MockSupabaseClient = Partial<SupabaseClient<any, "public", any>> & {
     mockOrder: ReturnType<typeof vi.fn>;
     mockLimit: ReturnType<typeof vi.fn>;
     mockSingle: ReturnType<typeof vi.fn>;
+    mockMaybeSingle: ReturnType<typeof vi.fn>;
     mockEq: ReturnType<typeof vi.fn>;
     mockGt: ReturnType<typeof vi.fn>;
     mockLt: ReturnType<typeof vi.fn>;
@@ -40,6 +41,7 @@ export function createMockSupabaseClient(): MockSupabaseClient {
     const mockOrder = vi.fn();
     const mockLimit = vi.fn();
     const mockSingle = vi.fn();
+    const mockMaybeSingle = vi.fn();
     const mockEq = vi.fn();
     const mockGt = vi.fn();
     const mockLt = vi.fn();
@@ -74,6 +76,7 @@ export function createMockSupabaseClient(): MockSupabaseClient {
             order: mockOrder,
             limit: mockLimit,
             single: mockSingle,
+            maybeSingle: mockMaybeSingle,
         };
 
         // フィルタリングだけ行う系（結果は変えずにチェーン継続）
@@ -141,6 +144,7 @@ export function createMockSupabaseClient(): MockSupabaseClient {
         mockOrder,
         mockLimit,
         mockSingle,
+        mockMaybeSingle,
         mockEq,
         mockGt,
         mockLt,
