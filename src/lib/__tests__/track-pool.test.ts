@@ -130,7 +130,7 @@ describeIf(hasSupabase && !isCI)('track-pool integration tests', () => {
         it('should validate metadata before inserting', async () => {
             const trackWithInvalidMetadata = {
                 ...mockTracks[0],
-                track_id: '9999',
+                track_id: 9999,
                 metadata: ['invalid', 'array'] as unknown,
             } as unknown as Track;
 
@@ -247,7 +247,7 @@ describeIf(hasSupabase)('track-pool error handling', () => {
 
         it('should throw error for tracks with missing required fields', async () => {
             const invalidTrack = {
-                track_id: '8888',
+                track_id: 8888,
                 // track_name, artist_name, preview_url が欠けている
             } as unknown as Track;
 

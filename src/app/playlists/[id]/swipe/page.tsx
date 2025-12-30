@@ -5,7 +5,7 @@ import { TrackCardStack } from "@/components/TrackCardStack";
 import { Layout } from "@/components/Layout";
 
 type Track = {
-  track_id: string;
+  track_id: number;
   type: "track";
   track_name: string;
   artist_name: string;

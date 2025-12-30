@@ -41,18 +41,6 @@ export async function GET() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-    if (process.env.NODE_ENV === 'development') {
-        // === デバッグログ追加 ===
-        console.log('=== Likes API Debug ===');
-        console.log('Raw data:', JSON.stringify(data, null, 2));
-        console.log('Error:', error);
-        console.log('Data length:', data?.length);
-        if (data && data.length > 0) {
-            console.log('First item structure:', JSON.stringify(data[0], null, 2));
-        }
-        // === ここまで ===
-    }
-
     if (error) {
         console.error('Failed to fetch likes:', error);
         return NextResponse.json({ error: 'Failed to fetch likes' }, { status: 500 });
@@ -65,7 +53,7 @@ export async function GET() {
             const pool = Array.isArray(item.track_pool) ? item.track_pool[0] : item.track_pool;
             if (!pool) return null;
             return {
-                track_id: String(item.track_id),
+                track_id: Number(item.track_id),
                 type: 'track' as const,
                 track_name: pool.track_name,
                 artist_name: pool.artist_name,

@@ -6,7 +6,7 @@ import type { Track } from '@/types/track-pool';
 export const mockTracks: Track[] = [
     {
         type: 'track',
-        track_id: '1001',
+        track_id: 1001,
         track_name: 'テスト曲1',
         artist_name: 'アーティスト1',
         collection_name: 'アルバム1',
@@ -22,7 +22,7 @@ export const mockTracks: Track[] = [
     },
     {
         type: 'track',
-        track_id: '1002',
+        track_id: 1002,
         track_name: 'テスト曲2',
         artist_name: 'アーティスト2',
         preview_url: 'https://example.com/preview2.m4a',
@@ -33,7 +33,7 @@ export const mockTracks: Track[] = [
     },
     {
         type: 'track',
-        track_id: '1003',
+        track_id: 1003,
         track_name: 'テスト曲3',
         artist_name: 'アーティスト3',
         collection_name: 'アルバム3',

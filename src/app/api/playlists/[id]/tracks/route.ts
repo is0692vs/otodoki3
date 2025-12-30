@@ -2,6 +2,17 @@ import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { SupabaseClient } from '@supabase/supabase-js';
 
+function parseTrackId(value: unknown): number | null {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : null;
+    }
+    if (typeof value === 'string') {
+        const parsed = parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+}
+
 async function verifyPlaylistOwnership(supabase: SupabaseClient, playlistId: string, userId: string) {
     const { data: playlist, error } = await supabase
         .from('playlists')
@@ -26,10 +37,10 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { track_id } = body;
+    const trackId = parseTrackId(body?.track_id);
 
-    if (!track_id) {
-        return NextResponse.json({ error: 'Track ID is required' }, { status: 400 });
+    if (trackId == null) {
+        return NextResponse.json({ error: 'Track ID is required and must be a number' }, { status: 400 });
     }
 
     // Verify playlist ownership
@@ -54,7 +65,7 @@ export async function POST(
         .from('playlist_tracks')
         .insert({
             playlist_id: id,
-            track_id,
+            track_id: trackId,
             position: nextPosition,
         });
 
@@ -66,7 +77,17 @@ export async function POST(
         return NextResponse.json({ error: 'Failed to add track' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    // Get the track info to return in response
+    const { data: trackData } = await supabase
+        .from('track_pool')
+        .select('track_id, track_name, artist_name, artwork_url, preview_url')
+        .eq('track_id', trackId)
+        .single();
+
+    return NextResponse.json({
+        success: true,
+        track: trackData
+    });
 }
 
 export async function DELETE(
@@ -82,10 +103,10 @@ export async function DELETE(
     }
 
     const body = await request.json();
-    const { track_id } = body;
+    const trackId = parseTrackId(body?.track_id);
 
-    if (!track_id) {
-        return NextResponse.json({ error: 'Track ID is required' }, { status: 400 });
+    if (trackId == null) {
+        return NextResponse.json({ error: 'Track ID is required and must be a number' }, { status: 400 });
     }
 
     // Verify playlist ownership
@@ -99,7 +120,7 @@ export async function DELETE(
         .from('playlist_tracks')
         .delete()
         .eq('playlist_id', id)
-        .eq('track_id', track_id);
+        .eq('track_id', trackId);
 
     if (error) {
         return NextResponse.json({ error: 'Failed to remove track' }, { status: 500 });
@@ -127,6 +148,16 @@ export async function PATCH(
         return NextResponse.json({ error: 'Tracks array is required' }, { status: 400 });
     }
 
+    // Convert all track_ids to numbers
+    const numericTracks: number[] = tracks.map((trackId: unknown) => {
+        const parsed = parseTrackId(trackId);
+        return parsed ?? NaN;
+    });
+
+    if (numericTracks.some((trackId) => !Number.isFinite(trackId))) {
+        return NextResponse.json({ error: 'All track IDs must be valid numbers' }, { status: 400 });
+    }
+
     // Verify playlist ownership
     const { playlist, error: playlistError } = await verifyPlaylistOwnership(supabase, id, user.id);
 
@@ -135,7 +166,7 @@ export async function PATCH(
     }
 
     // Update positions
-    const updates = tracks.map((trackId, index) =>
+    const updates = numericTracks.map((trackId, index) =>
         supabase
             .from('playlist_tracks')
             .update({ position: index })

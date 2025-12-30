@@ -19,7 +19,7 @@ export interface RefillConfig {
 
 export interface Track {
     type: 'track';  // ← 追加
-    track_id: string;
+    track_id: number;
     track_name: string;
     artist_name: string;
     collection_name?: string;

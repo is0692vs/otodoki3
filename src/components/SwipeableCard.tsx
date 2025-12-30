@@ -18,10 +18,11 @@ import {
   useImperativeHandle,
   useCallback,
 } from "react";
-import { Heart, X, Play, Pause } from "lucide-react";
+import { Heart, X, Play, Pause, Plus } from "lucide-react";
 import type { CardItem } from "../types/track-pool";
 import { TrackCard } from "./TrackCard";
 import { TutorialCard } from "./TutorialCard";
+import { AddToPlaylistModal } from "./AddToPlaylistModal";
 
 const ROTATE_INPUT_RANGE_PX = 200;
 const ROTATE_OUTPUT_RANGE_DEG = 15; // 30から15に変更（回転を緩やかに）
@@ -81,6 +82,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
     const [showReaction, setShowReaction] = useState<"like" | "skip" | null>(
       null
     );
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const x = useMotionValue(0);
     const swipeTimeoutRef = useRef<number | null>(null);
     const isSwipingRef = useRef(false);
@@ -305,7 +307,24 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
         {item.type === "tutorial" ? (
           <TutorialCard mode={tutorialMode} />
         ) : (
-          <TrackCard track={item} progress={progress} />
+          <>
+            <TrackCard track={item} progress={progress} />
+
+            {/* プレイリスト追加ボタン (右上) */}
+            {isTop && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsModalOpen(true);
+                }}
+                className="absolute top-4 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-all hover:bg-black/60 hover:scale-110 active:scale-95"
+                aria-label="プレイリストに追加"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+            )}
+          </>
         )}
 
         {/* 再生/停止ボタン (横幅中央) */}
@@ -334,6 +353,15 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
               )}
             </motion.div>
           </button>
+        )}
+
+        {/* プレイリスト追加モーダル */}
+        {"track_id" in item && (
+          <AddToPlaylistModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            trackId={item.track_id}
+          />
         )}
       </motion.div>
     );

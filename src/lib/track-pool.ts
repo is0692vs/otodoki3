@@ -51,9 +51,15 @@ export async function getTracksFromPool(count: number): Promise<Track[]> {
         }
 
         // Database型からTrack型に変換
-        return data.map((row) => ({
+        return data.map((row) => {
+            const trackId = Number(row.track_id);
+            if (!Number.isFinite(trackId)) {
+                console.warn(`Invalid track_id: ${row.track_id}`);
+                return null;
+            }
+            return {
             type: 'track',
-            track_id: row.track_id,
+            track_id: trackId,
             track_name: row.track_name,
             artist_name: row.artist_name,
             collection_name: row.collection_name ?? undefined,
@@ -63,7 +69,8 @@ export async function getTracksFromPool(count: number): Promise<Track[]> {
             genre: row.genre ?? undefined,
             release_date: row.release_date ?? undefined,
             metadata: row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata) ? (row.metadata as Record<string, unknown>) : undefined,
-        }));
+            };
+        }).filter((track) => track !== null) as Track[];
     } catch (error) {
         console.error('Error in getTracksFromPool:', error);
         throw error;
@@ -87,7 +94,7 @@ export async function addTracksToPool(
 
         // Track型からDatabase Insert型に変換
         const insertData = tracks.map((track) => ({
-            track_id: track.track_id,
+            track_id: String(track.track_id),
             track_name: track.track_name,
             artist_name: track.artist_name,
             collection_name: track.collection_name ?? null,

@@ -31,6 +31,18 @@ describe('POST /api/playlists/[id]/tracks', () => {
             error: null,
         });
 
+        // track_pool lookup
+        mockSupabase.mockSingle.mockResolvedValueOnce({
+            data: {
+                track_id: 12345,
+                track_name: 'Test Track',
+                artist_name: 'Test Artist',
+                artwork_url: 'https://example.com/artwork.jpg',
+                preview_url: 'https://example.com/preview.mp3',
+            },
+            error: null,
+        });
+
         // maxPosData (empty playlist)
         mockSupabase.mockMaybeSingle.mockResolvedValueOnce({
             data: null,
@@ -44,7 +56,7 @@ describe('POST /api/playlists/[id]/tracks', () => {
 
         const req = new NextRequest('http://localhost/api/playlists/playlist-1/tracks', {
             method: 'POST',
-            body: JSON.stringify({ track_id: 'track-1' }),
+            body: JSON.stringify({ track_id: '12345' }),
         });
 
         const params = Promise.resolve({ id: 'playlist-1' });
@@ -80,7 +92,7 @@ describe('POST /api/playlists/[id]/tracks', () => {
 
         const req = new NextRequest('http://localhost/api/playlists/playlist-1/tracks', {
             method: 'POST',
-            body: JSON.stringify({ track_id: 'track-1' }),
+            body: JSON.stringify({ track_id: '12345' }),
         });
 
         const params = Promise.resolve({ id: 'playlist-1' });

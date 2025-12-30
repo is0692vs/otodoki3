@@ -65,7 +65,7 @@ describe('GET /api/playlists/likes', () => {
             expect(data.tracks).toHaveLength(2);
 
             expect(data.tracks[0]).toMatchObject({
-                track_id: '12345',
+                track_id: 12345,
                 type: 'track',
                 track_name: 'Liked Track 1',
                 artist_name: 'Artist 1',
@@ -75,7 +75,7 @@ describe('GET /api/playlists/likes', () => {
             });
 
             expect(data.tracks[1]).toMatchObject({
-                track_id: '67890',
+                track_id: 67890,
                 type: 'track',
                 track_name: 'Liked Track 2',
                 artist_name: 'Artist 2',
@@ -147,7 +147,7 @@ describe('GET /api/playlists/likes', () => {
 
             expect(response.status).toBe(200);
             expect(data.tracks).toHaveLength(1);
-            expect(data.tracks[0].track_id).toBe('12345');
+            expect(data.tracks[0].track_id).toBe(12345);
         });
 
         it('created_at の降順でソートされる', async () => {
@@ -158,7 +158,7 @@ describe('GET /api/playlists/likes', () => {
 
             const mockSortedData = [
                 {
-                    track_id: '3',
+                    track_id: 3,
                     created_at: '2024-01-03T00:00:00.000Z',
                     track_pool: [
                         {

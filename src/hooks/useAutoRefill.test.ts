@@ -37,7 +37,7 @@ describe('useAutoRefill', () => {
     it('should not refill when stack is above threshold', () => {
         const stack: CardItem[] = Array(5).fill({
             type: 'track',
-            track_id: '1',
+            track_id: 1,
             track_name: 'Test Track',
             artist_name: 'Test Artist',
             preview_url: 'http://example.com/preview.mp3'
@@ -54,13 +54,13 @@ describe('useAutoRefill', () => {
     it('should refill when stack is at or below threshold', async () => {
         const stack: CardItem[] = Array(3).fill({
             type: 'track',
-            track_id: '1',
+            track_id: 1,
             track_name: 'Test Track',
             artist_name: 'Test Artist',
             preview_url: 'http://example.com/preview.mp3'
         } as Track);
         const onRefill = vi.fn();
-        const newTracks = [{ track_id: '100' }, { track_id: '101' }];
+        const newTracks = [{ track_id: 100 }, { track_id: 101 }];
 
         mockFetch.mockResolvedValueOnce({
             ok: true,
@@ -83,7 +83,7 @@ describe('useAutoRefill', () => {
     it('should not refill if disableRefill is true', () => {
         const stack: CardItem[] = Array(1).fill({
             type: 'track',
-            track_id: '1',
+            track_id: 1,
             track_name: 'Test Track',
             artist_name: 'Test Artist',
             preview_url: 'http://example.com/preview.mp3'

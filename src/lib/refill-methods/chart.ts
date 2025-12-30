@@ -141,9 +141,15 @@ export async function fetchTracksFromChart(
                 continue;
             }
 
+            const trackId = Number(item.id);
+            if (!Number.isFinite(trackId)) {
+                console.warn(`Skipping track with invalid id from RSS: ${item.id}`);
+                continue;
+            }
+
             const track: Track = {
                 type: 'track',  // ← 追加
-                track_id: item.id,
+                track_id: trackId,
                 track_name: item.name,
                 artist_name: item.artistName,
                 collection_name: undefined,

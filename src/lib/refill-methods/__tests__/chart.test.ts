@@ -69,7 +69,7 @@ describe('fetchTracksFromChart', () => {
 
             expect(tracks).toHaveLength(3);
             expect(tracks[0]).toMatchObject({
-                track_id: '2001',
+                track_id: 2001,
                 track_name: 'チャート曲1',
                 artist_name: 'チャートアーティスト1',
                 preview_url: 'https://audio-ssl.itunes.apple.com/itunes-assets/chart1.m4a',

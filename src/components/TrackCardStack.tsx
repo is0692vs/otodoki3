@@ -338,7 +338,7 @@ export function TrackCardStack({
     const top = stack[0];
     if (!top) return;
     const key =
-      "type" in top && top.type === "tutorial" ? top.id : top.track_id;
+      "type" in top && top.type === "tutorial" ? top.id : String(top.track_id);
     cardRefs.current.get(key)?.swipeLeft();
   };
 
@@ -347,7 +347,7 @@ export function TrackCardStack({
     const top = stack[0];
     if (!top) return;
     const key =
-      "type" in top && top.type === "tutorial" ? top.id : top.track_id;
+      "type" in top && top.type === "tutorial" ? top.id : String(top.track_id);
     cardRefs.current.get(key)?.swipeRight();
   };
 
@@ -413,7 +413,7 @@ export function TrackCardStack({
               const key =
                 "type" in item && item.type === "tutorial"
                   ? item.id
-                  : item.track_id;
+                  : String(item.track_id);
 
               return (
                 <SwipeableCard
