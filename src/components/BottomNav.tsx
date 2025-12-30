@@ -15,7 +15,7 @@ export function BottomNav() {
       style={{ marginBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Bottom navigation"
     >
-      <div className="mx-auto grid max-w-md grid-cols-4 px-2 py-2">
+      <div className="mx-auto grid max-w-md grid-cols-3 px-2 py-2">
         {NAV_ITEMS.map((item) => {
           if (item.isLogout) {
             return (
