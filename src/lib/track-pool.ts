@@ -94,7 +94,7 @@ export async function addTracksToPool(
 
         // Track型からDatabase Insert型に変換
         const insertData = tracks.map((track) => ({
-            track_id: track.track_id,
+            track_id: String(track.track_id),
             track_name: track.track_name,
             artist_name: track.artist_name,
             collection_name: track.collection_name ?? null,
