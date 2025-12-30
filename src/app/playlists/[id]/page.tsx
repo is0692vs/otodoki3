@@ -242,6 +242,7 @@ export default function PlaylistDetailPage() {
             isOpen={isModalOpen}
             onClose={() => {
               setIsModalOpen(false);
+              fetchData();
             }}
             playlistId={id as string}
             existingTrackIds={existingTrackIds}

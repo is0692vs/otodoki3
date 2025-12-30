@@ -152,7 +152,7 @@ export function AddToPlaylistModal({
           </div>
 
           {/* プレイリスト一覧 */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -173,18 +173,18 @@ export function AddToPlaylistModal({
                     type="button"
                     onClick={() => handleAddToPlaylist(playlist.id)}
                     disabled={adding === playlist.id}
-                    className="group flex items-center gap-4 p-4 bg-zinc-800/50 rounded-xl hover:bg-zinc-800 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group flex w-full items-center gap-4 p-4 bg-zinc-800/50 rounded-xl hover:bg-zinc-800 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed min-w-0"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-900 text-2xl">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-2xl">
                       {playlist.icon && playlist.icon !== "🎵" ? (
                         playlist.icon
                       ) : (
                         <Music className="h-6 w-6 text-zinc-400" />
                       )}
                     </div>
-                    <div className="flex-1 text-left">
-                      <p className="font-semibold">{playlist.name}</p>
-                      <p className="text-sm text-zinc-400">
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="font-semibold truncate">{playlist.name}</p>
+                      <p className="text-sm text-zinc-400 truncate">
                         {playlist.count} 曲
                       </p>
                     </div>

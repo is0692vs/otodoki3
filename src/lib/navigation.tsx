@@ -15,6 +15,5 @@ export const NAV_ITEMS: NavItemSpec[] = [
     label: "ライブラリ",
     href: "/playlists",
   },
-  { icon: <LogOut className="h-5 w-5" />, label: "ログアウト", isLogout: true },
-  { icon: <User className="h-5 w-5" />, label: "マイページ", href: "/profile" },
+  { icon: <User className="h-5 w-5" />, label: "マイページ", href: "/mypage" },
 ];

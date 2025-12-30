@@ -31,7 +31,6 @@ export function SelectTrackModal({
 }: SelectTrackModalProps) {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(false);
-  const [adding, setAdding] = useState<number | null>(null);
   const [addedTracks, setAddedTracks] = useState<Set<number>>(new Set());
   const [toast, setToast] = useState<{
     message: string;
@@ -41,11 +40,15 @@ export function SelectTrackModal({
   useEffect(() => {
     if (isOpen) {
       fetchLikesTracks();
-      // existingTrackIdsをinitial stateとして設定
-      // 毎回モーダルを開く時に existingTrackIds を反映
-      setAddedTracks(new Set(existingTrackIds));
       // トーストをリセット
       setToast(null);
+    }
+  }, [isOpen]);
+
+  // existingTrackIds が変わった時（追加された時）に addedTracks を同期
+  useEffect(() => {
+    if (isOpen) {
+      setAddedTracks(new Set(existingTrackIds));
     }
   }, [isOpen, existingTrackIds]);
 
@@ -83,7 +86,14 @@ export function SelectTrackModal({
       return;
     }
 
-    setAdding(trackId);
+    // 楽観的更新：即座に反映
+    setAddedTracks((prev) => new Set([...prev, trackId]));
+
+    const trackToReturn = tracks.find((t) => t.track_id === trackId);
+    if (trackToReturn) {
+      onSuccess?.(trackToReturn);
+    }
+
     try {
       const res = await fetch(`/api/playlists/${playlistId}/tracks`, {
         method: "POST",
@@ -94,15 +104,6 @@ export function SelectTrackModal({
       });
 
       if (res.ok) {
-        const data = await res.json();
-        // 楽観的更新：即座に addedTracks に反映
-        setAddedTracks((prev) => new Set([...prev, trackId]));
-        // API レスポンスから track 情報を取得、なければ local state から取得
-        const trackToReturn =
-          data.track || tracks.find((t) => t.track_id === trackId);
-        // 親に即通知（リロードなし）
-        onSuccess?.(trackToReturn);
-        // トーストは最後に表示（スクロール位置維持）
         setToast({
           message: "曲を追加しました",
           type: "success",
@@ -112,9 +113,13 @@ export function SelectTrackModal({
           message: "既にこのプレイリストに追加されています",
           type: "error",
         });
-        // 409でもaddedTracksに追加してUIを更新（実験的）
-        setAddedTracks((prev) => new Set([...prev, trackId]));
       } else {
+        // 失敗した場合はロールバック
+        setAddedTracks((prev) => {
+          const next = new Set(prev);
+          next.delete(trackId);
+          return next;
+        });
         setToast({
           message: "追加に失敗しました",
           type: "error",
@@ -122,12 +127,16 @@ export function SelectTrackModal({
       }
     } catch (err) {
       console.error("Error adding track:", err);
+      // 失敗した場合はロールバック
+      setAddedTracks((prev) => {
+        const next = new Set(prev);
+        next.delete(trackId);
+        return next;
+      });
       setToast({
         message: "エラーが発生しました",
         type: "error",
       });
-    } finally {
-      setAdding(null);
     }
   };
 
@@ -139,7 +148,7 @@ export function SelectTrackModal({
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-xl">
           {/* ヘッダー */}
           <div className="flex justify-between items-center p-6 border-b border-zinc-800">
-            <h2 className="text-xl font-bold">お気に入りから曲を選択</h2>
+            <h2 className="text-xl font-bold truncate mr-2">お気に入りから曲を選択</h2>
             <button
               type="button"
               onClick={onClose}
@@ -151,7 +160,7 @@ export function SelectTrackModal({
           </div>
 
           {/* 曲一覧 */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -166,7 +175,6 @@ export function SelectTrackModal({
                 {tracks.map((track) => {
                   const trackId = track.track_id;
                   const isAlreadyInPlaylist = addedTracks.has(trackId);
-                  const isAdding = adding === trackId;
 
                   return (
                     <button
@@ -175,12 +183,12 @@ export function SelectTrackModal({
                       onClick={() =>
                         !isAlreadyInPlaylist && handleAddTrack(trackId)
                       }
-                      disabled={isAlreadyInPlaylist || isAdding}
-                      className={`group flex items-center gap-3 p-3 rounded-xl transition-all ${
+                      disabled={isAlreadyInPlaylist}
+                      className={`group flex w-full items-center gap-3 p-3 rounded-xl transition-all min-w-0 ${
                         isAlreadyInPlaylist
                           ? "bg-green-500/10 cursor-default"
                           : "bg-zinc-800/50 hover:bg-zinc-800 active:scale-[0.98]"
-                      } ${isAdding ? "opacity-50" : ""}`}
+                      }`}
                     >
                       <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-zinc-900">
                         <Image
@@ -200,9 +208,7 @@ export function SelectTrackModal({
                         </p>
                       </div>
                       <div className="shrink-0">
-                        {isAdding ? (
-                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        ) : isAlreadyInPlaylist ? (
+                        {isAlreadyInPlaylist ? (
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20">
                             <Check className="h-5 w-5 text-green-400" />
                           </div>
