@@ -16,16 +16,15 @@ import packageJson from "../../../package.json";
 export default async function MyPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const authRes = await supabase.auth.getUser();
+  const user = authRes.data?.user;
+  const authError = authRes.error;
 
   if (authError || !user) {
     redirect("/login");
   }
 
-  // Fetch stats in parallel
+  // Fetch stats in parallel (user-scoped)
   const [likesResult, dislikesResult, playlistsResult] = await Promise.all([
     supabase
       .from("likes")
@@ -40,6 +39,11 @@ export default async function MyPage() {
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id),
   ]);
+
+  // Log query errors for observability
+  if (likesResult.error) console.error("Failed to fetch likes:", likesResult.error);
+  if (dislikesResult.error) console.error("Failed to fetch dislikes:", dislikesResult.error);
+  if (playlistsResult.error) console.error("Failed to fetch playlists:", playlistsResult.error);
 
   const likesCount = likesResult.count ?? 0;
   const dislikesCount = dislikesResult.count ?? 0;
