@@ -179,8 +179,12 @@ jobs:
         uses: supabase/setup-cli@v1
         with:
           version: latest
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - name: Apply E2E seed data to track_pool
         run: |
+          set -euxo pipefail
+          
           # Supabaseテスト環境に接続
           SUPABASE_PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_TEST }}"
           SUPABASE_DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD_TEST }}"
@@ -190,6 +194,11 @@ jobs:
           DB_PORT="5432"
           DB_NAME="postgres"
           DB_USER="postgres"
+          
+          # DB接続チェック
+          PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
+            "postgresql://${DB_USER}:${SUPABASE_DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}" \
+            -c "SELECT 1;"
           
           # PostgreSQL経由でseed SQLを実行
           PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
