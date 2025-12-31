@@ -11,7 +11,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-4 left-4 right-4 z-40 glass rounded-2xl border border-white/10 shadow-2xl md:hidden"
+      className="fixed bottom-4 left-4 right-4 z-40 glass rounded-2xl border border-border shadow-2xl md:hidden"
       style={{ marginBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Bottom navigation"
     >

@@ -131,7 +131,7 @@ export default function PlaylistDetailPage() {
   if (loading || !playlistInfo)
     return (
       <Layout>
-        <div className="bg-black text-white flex items-center justify-center">
+        <div className="bg-background text-foreground flex items-center justify-center">
           読み込み中...
         </div>
       </Layout>
@@ -139,20 +139,20 @@ export default function PlaylistDetailPage() {
 
   return (
     <Layout>
-      <div className="min-h-full bg-zinc-950 text-white p-6 pb-24">
+      <div className="min-h-full bg-background text-foreground p-6 pb-24">
         <div className="w-full max-w-3xl mx-auto">
           <header className="mb-8">
             <div className="flex items-center gap-4 mb-6">
               <button
                 type="button"
                 onClick={() => router.push("/playlists")}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all active:scale-90"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground transition-all active:scale-90"
                 aria-label="戻る"
               >
                 <ChevronLeft className="h-6 w-6" />
               </button>
               <div className="flex items-center gap-3 flex-1">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary">
                   {playlistInfo.icon}
                 </div>
                 <h1 className="text-3xl font-bold tracking-tight">
@@ -164,7 +164,7 @@ export default function PlaylistDetailPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(true)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black hover:bg-zinc-200 transition-all active:scale-90"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-90"
                   aria-label="曲を追加"
                 >
                   <Plus className="h-5 w-5" />
@@ -174,7 +174,7 @@ export default function PlaylistDetailPage() {
 
             <Link
               href={`/playlists/${id}/swipe`}
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all active:scale-[0.98] shadow-lg shadow-blue-900/20"
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all active:scale-[0.98] shadow-lg shadow-primary/20"
             >
               <Play className="h-4 w-4 fill-current" />
               スワイプで再評価
@@ -182,7 +182,7 @@ export default function PlaylistDetailPage() {
           </header>
 
           {tracks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
               <Music className="h-12 w-12 mb-4 opacity-20" />
               <p>曲がありません</p>
             </div>
@@ -195,11 +195,11 @@ export default function PlaylistDetailPage() {
                   onClick={() => handlePlay(track)}
                   className={`group flex items-center gap-4 w-full p-2 rounded-xl transition-all active:scale-[0.99] ${
                     playingId === track.track_id
-                      ? "bg-white/10"
-                      : "hover:bg-white/5"
+                      ? "bg-accent"
+                      : "hover:bg-accent/50"
                   }`}
                 >
-                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-zinc-900">
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-muted">
                     <Image
                       src={track.artwork_url}
                       alt={track.track_name}
@@ -217,18 +217,18 @@ export default function PlaylistDetailPage() {
                     <p
                       className={`font-medium truncate ${
                         playingId === track.track_id
-                          ? "text-blue-400"
-                          : "text-white"
+                          ? "text-primary"
+                          : "text-foreground"
                       }`}
                     >
                       {track.track_name}
                     </p>
-                    <p className="text-sm text-zinc-400 truncate">
+                    <p className="text-sm text-muted-foreground truncate">
                       {track.artist_name}
                     </p>
                   </div>
                   {playingId !== track.track_id && (
-                    <Play className="h-5 w-5 text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Play className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   )}
                 </button>
               ))}

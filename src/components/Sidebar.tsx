@@ -11,12 +11,12 @@ export function Sidebar() {
 
   return (
     <aside
-      className="fixed left-0 top-0 bottom-0 z-30 hidden w-64 border-r border-white/10 bg-black/20 backdrop-blur-xl md:block"
+      className="fixed left-0 top-0 bottom-0 z-30 hidden w-64 border-r border-border bg-background/80 backdrop-blur-xl md:block"
       aria-label="Sidebar"
     >
       <div className="flex h-full flex-col p-6">
         <div className="mb-8 px-2">
-          <h1 className="bg-gradient-to-br from-white to-white/40 bg-clip-text text-2xl font-black tracking-tight text-transparent">
+          <h1 className="bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-2xl font-black tracking-tight text-transparent">
             otodoki3
           </h1>
         </div>

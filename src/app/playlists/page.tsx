@@ -19,12 +19,12 @@ const PlaylistIcon = ({ id, icon }: { id: string; icon?: string }) => {
     case "likes":
       return <Heart className="h-6 w-6 text-red-500 fill-current" />;
     case "dislikes":
-      return <Ban className="h-6 w-6 text-zinc-400" />;
+      return <Ban className="h-6 w-6 text-muted-foreground" />;
     default:
       if (icon && icon !== "🎵") {
         return <span className="text-2xl">{icon}</span>;
       }
-      return <Music className="h-6 w-6 text-zinc-400" />;
+      return <Music className="h-6 w-6 text-muted-foreground" />;
   }
 };
 
@@ -113,14 +113,14 @@ export default function PlaylistsPage() {
         <header className="mb-8 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">ライブラリ</h1>
-            <p className="text-zinc-400 text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-1">
               保存した曲やスキップした曲
             </p>
           </div>
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="p-2 bg-white text-black rounded-full hover:bg-zinc-200 transition-colors"
+            className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors"
             aria-label="Create Playlist"
           >
             <Plus className="h-6 w-6" />
@@ -132,31 +132,31 @@ export default function PlaylistsPage() {
             <Link
               key={pl.id}
               href={`/playlists/${pl.id}`}
-              className="group flex items-center gap-4 p-4 glass rounded-2xl hover:bg-white/10 transition-all active:scale-[0.98]"
+              className="group flex items-center gap-4 p-4 bg-card border border-border rounded-2xl hover:bg-accent transition-all active:scale-[0.98]"
               data-testid="playlist-item"
             >
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-zinc-900 group-hover:bg-zinc-800 transition-colors">
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-secondary group-hover:bg-secondary/80 transition-colors">
                 <PlaylistIcon id={pl.id} icon={pl.icon} />
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-lg">{pl.name}</p>
-                <p className="text-sm text-zinc-400">{pl.count} 曲</p>
+                <p className="text-sm text-muted-foreground">{pl.count} 曲</p>
               </div>
-              <ChevronRight className="h-5 w-5 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             </Link>
           ))}
         </div>
 
         {/* Create Playlist Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+            <div className="bg-card border border-border rounded-2xl w-full max-w-md p-6 shadow-xl">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold">新規プレイリスト作成</h2>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="text-zinc-400 hover:text-white transition-colors"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <X className="h-6 w-6" />
                 </button>
@@ -167,21 +167,21 @@ export default function PlaylistsPage() {
                   value={newPlaylistTitle}
                   onChange={(e) => setNewPlaylistTitle(e.target.value)}
                   placeholder="プレイリスト名"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 mb-6"
+                  className="w-full bg-input border border-input rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring mb-6"
                   autoFocus
                 />
                 <div className="flex justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                    className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     キャンセル
                   </button>
                   <button
                     type="submit"
                     disabled={!newPlaylistTitle.trim() || creating}
-                    className="px-6 py-2 bg-white text-black font-semibold rounded-full hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2 bg-primary text-primary-foreground font-semibold rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {creating ? "作成中..." : "作成"}
                   </button>

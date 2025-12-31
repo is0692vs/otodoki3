@@ -144,15 +144,17 @@ export function SelectTrackModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-xl">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+        <div className="bg-card border border-border rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-xl">
           {/* ヘッダー */}
-          <div className="flex justify-between items-center p-6 border-b border-zinc-800">
-            <h2 className="text-xl font-bold truncate mr-2">お気に入りから曲を選択</h2>
+          <div className="flex justify-between items-center p-6 border-b border-border">
+            <h2 className="text-xl font-bold truncate mr-2 text-foreground">
+              お気に入りから曲を選択
+            </h2>
             <button
               type="button"
               onClick={onClose}
-              className="text-zinc-400 hover:text-white transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors"
               aria-label="閉じる"
             >
               <X className="h-6 w-6" />
@@ -163,10 +165,10 @@ export function SelectTrackModal({
           <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               </div>
             ) : tracks.length === 0 ? (
-              <div className="text-center py-12 text-zinc-400">
+              <div className="text-center py-12 text-muted-foreground">
                 <Music className="h-12 w-12 mx-auto mb-4 opacity-20" />
                 <p className="text-sm">お気に入りに曲がありません</p>
               </div>
@@ -187,10 +189,10 @@ export function SelectTrackModal({
                       className={`group flex w-full items-center gap-3 p-3 rounded-xl transition-all min-w-0 ${
                         isAlreadyInPlaylist
                           ? "bg-green-500/10 cursor-default"
-                          : "bg-zinc-800/50 hover:bg-zinc-800 active:scale-[0.98]"
+                          : "bg-secondary/50 hover:bg-secondary active:scale-[0.98]"
                       }`}
                     >
-                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-zinc-900">
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
                         <Image
                           src={track.artwork_url}
                           alt={track.track_name}
@@ -200,20 +202,20 @@ export function SelectTrackModal({
                         />
                       </div>
                       <div className="flex-1 text-left min-w-0">
-                        <p className="font-medium truncate text-white text-sm">
+                        <p className="font-medium truncate text-foreground text-sm">
                           {track.track_name}
                         </p>
-                        <p className="text-xs text-zinc-400 truncate">
+                        <p className="text-xs text-muted-foreground truncate">
                           {track.artist_name}
                         </p>
                       </div>
                       <div className="shrink-0">
                         {isAlreadyInPlaylist ? (
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20">
-                            <Check className="h-5 w-5 text-green-400" />
+                            <Check className="h-5 w-5 text-green-600" />
                           </div>
                         ) : (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-700 text-zinc-400 group-hover:bg-zinc-600 group-hover:text-white transition-colors">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground group-hover:bg-secondary-foreground/10 group-hover:text-foreground transition-colors">
                             <Music className="h-4 w-4" />
                           </div>
                         )}

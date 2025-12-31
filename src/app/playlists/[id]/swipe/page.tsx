@@ -46,7 +46,7 @@ export default function PlaylistSwipePage() {
   if (loading)
     return (
       <Layout>
-        <div className="bg-black text-white flex items-center justify-center">
+        <div className="bg-background text-foreground flex items-center justify-center">
           読み込み中...
         </div>
       </Layout>
@@ -54,12 +54,12 @@ export default function PlaylistSwipePage() {
   if (tracks.length === 0)
     return (
       <Layout>
-        <div className="bg-black text-white flex flex-col items-center justify-center gap-4">
+        <div className="bg-background text-foreground flex flex-col items-center justify-center gap-4">
           <p>曲がありません</p>
           <button
             type="button"
             onClick={() => router.push(`/playlists/${id}`)}
-            className="rounded-lg shadow-md hover:shadow-lg transition-all duration-200 active:scale-95 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 text-sm"
+            className="rounded-lg shadow-md hover:shadow-lg transition-all duration-200 active:scale-95 bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 text-sm"
           >
             プレイリストに戻る
           </button>
@@ -71,12 +71,12 @@ export default function PlaylistSwipePage() {
   // 補充なし + 終了時にメッセージ表示
   return (
     <Layout>
-      <div className="bg-black text-white p-4">
+      <div className="bg-background text-foreground p-4">
         <div className="mb-6 flex items-center gap-4">
           <button
             type="button"
             onClick={() => router.push(`/playlists/${id}`)}
-            className="rounded-lg shadow-md hover:shadow-lg transition-all duration-200 active:scale-95 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 text-lg"
+            className="rounded-lg shadow-md hover:shadow-lg transition-all duration-200 active:scale-95 bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-2 text-lg"
           >
             ←
           </button>

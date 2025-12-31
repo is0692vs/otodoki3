@@ -26,11 +26,11 @@ export function TrackCard({ track, progress }: TrackCardProps) {
 
   return (
     <article
-      className="glass flex h-full w-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 text-white shadow-2xl"
+      className="flex h-full w-full flex-col overflow-hidden rounded-3xl border border-border bg-background text-foreground shadow-2xl"
       aria-label={`${track.track_name} - ${track.artist_name}`}
     >
       {/* 画像エリア (正方形) */}
-      <div className="relative aspect-square w-full overflow-hidden bg-white/5">
+      <div className="relative aspect-square w-full overflow-hidden bg-muted">
         {artworkUrl ? (
           <Image
             src={artworkUrl}
@@ -59,7 +59,7 @@ export function TrackCard({ track, progress }: TrackCardProps) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Apple Musicで開く"
-            className="absolute right-4 bottom-4 z-10 inline-flex items-center rounded-full bg-black/40 p-2.5 backdrop-blur-xl transition-all hover:bg-black/60 hover:scale-110 active:scale-95"
+            className="absolute right-4 bottom-4 z-10 inline-flex items-center rounded-full bg-background/60 p-2.5 backdrop-blur-xl transition-all hover:bg-background/80 hover:scale-110 active:scale-95"
           >
             <Image
               src="/apple-music-badge.svg"
@@ -82,7 +82,7 @@ export function TrackCard({ track, progress }: TrackCardProps) {
         <h3 className="line-clamp-2 text-xl font-bold leading-tight tracking-tight">
           {track.track_name}
         </h3>
-        <p className="mt-1 line-clamp-1 text-sm font-medium text-white/50">
+        <p className="mt-1 line-clamp-1 text-sm font-medium text-muted-foreground">
           {track.artist_name}
         </p>
       </div>

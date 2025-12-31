@@ -365,7 +365,7 @@ export function TrackCardStack({
 
     return (
       <div className="flex flex-col items-center gap-8">
-        <div className="glass flex h-[min(85vw,340px)] w-[min(85vw,340px)] items-center justify-center rounded-3xl border border-white/10 bg-white/5 text-foreground">
+        <div className="flex h-[min(85vw,340px)] w-[min(85vw,340px)] items-center justify-center rounded-3xl border border-border bg-secondary text-secondary-foreground shadow-inner">
           <p className="text-sm font-medium opacity-60">{emptyMessage}</p>
         </div>
       </div>
@@ -398,7 +398,7 @@ export function TrackCardStack({
         {!error && isRefilling && (
           <div
             role="status"
-            className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-white/10 px-6 py-3 text-sm font-medium text-white shadow-lg backdrop-blur-md md:bottom-8"
+            className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-lg md:bottom-8"
           >
             楽曲を補充中...
           </div>
@@ -448,7 +448,7 @@ export function TrackCardStack({
           type="button"
           onClick={handleDislikeClick}
           disabled={actionInProgress}
-          className={`group flex h-20 w-20 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white shadow-xl backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:scale-110 active:scale-90 ${
+          className={`group flex h-20 w-20 items-center justify-center rounded-full border border-border bg-secondary text-secondary-foreground shadow-xl transition-all duration-300 hover:bg-muted hover:scale-110 active:scale-90 ${
             actionInProgress ? "opacity-50 cursor-not-allowed" : ""
           }`}
           aria-label="よくない"
@@ -460,7 +460,7 @@ export function TrackCardStack({
           type="button"
           onClick={handleLikeClick}
           disabled={actionInProgress}
-          className={`group flex h-20 w-20 items-center justify-center rounded-full border border-blue-500/30 bg-blue-600/20 text-blue-400 shadow-xl backdrop-blur-md transition-all duration-300 hover:bg-blue-600/30 hover:scale-110 active:scale-90 ${
+          className={`group flex h-20 w-20 items-center justify-center rounded-full border border-primary bg-primary text-primary-foreground shadow-xl transition-all duration-300 hover:opacity-90 hover:scale-110 active:scale-90 ${
             actionInProgress ? "opacity-50 cursor-not-allowed" : ""
           }`}
           aria-label="いいね"

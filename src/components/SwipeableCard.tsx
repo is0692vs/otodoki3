@@ -285,7 +285,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
                 className={`flex h-32 w-32 items-center justify-center rounded-full glass ${
                   showReaction === "like"
                     ? "bg-red-500/20 border-red-500/50"
-                    : "bg-white/10 border-white/30"
+                    : "bg-muted border-muted-foreground/30"
                 }`}
               >
                 {showReaction === "like" ? (
@@ -295,7 +295,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
                   />
                 ) : (
                   <X
-                    className="h-16 w-16 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                    className="h-16 w-16 text-muted-foreground"
                     aria-label="よくない"
                   />
                 )}
@@ -318,7 +318,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
                   e.stopPropagation();
                   setIsModalOpen(true);
                 }}
-                className="absolute top-4 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition-all hover:bg-black/60 hover:scale-110 active:scale-95"
+                className="absolute top-4 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-background/60 text-foreground backdrop-blur-md transition-all hover:bg-background/80 hover:scale-110 active:scale-95"
                 aria-label="プレイリストに追加"
               >
                 <Plus className="h-5 w-5" />
@@ -338,7 +338,7 @@ export const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(
             <motion.div
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="flex h-20 w-20 items-center justify-center rounded-full glass bg-white/10 text-white transition-colors hover:bg-white/20"
+              className="flex h-20 w-20 items-center justify-center rounded-full glass bg-primary/80 text-primary-foreground transition-colors hover:bg-primary"
             >
               {isPlaying ? (
                 <Pause
