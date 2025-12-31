@@ -195,7 +195,9 @@ jobs:
           supabase link --project-ref "${SUPABASE_PROJECT_REF}"
 
           # Apply migrations
+          set +o pipefail
           yes | supabase db push --include-all
+          set -o pipefail
 
           # DB接続情報を構築
           DB_HOST="db.${SUPABASE_PROJECT_REF}.supabase.co"
