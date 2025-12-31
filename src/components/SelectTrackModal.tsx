@@ -43,7 +43,6 @@ export function SelectTrackModal({
 
   const stopAudio = () => {
     if (audioRef.current) {
-      audioRef.current.onended = null;
       audioRef.current.pause();
       audioRef.current = null;
     }
@@ -69,16 +68,16 @@ export function SelectTrackModal({
 
     audioRef.current = new Audio(track.preview_url);
     audioRef.current.onended = () => setPlayingId(null);
-    audioRef.current.play().catch(() => {});
+    audioRef.current.play().catch((err) => console.error("Failed to play audio preview:", err));
     setPlayingId(track.track_id);
   };
 
   // モーダルが閉じられた or コンポーネントがアンマウントされたときは音声を停止
   useEffect(() => {
-    if (!isOpen) {
-      stopAudio();
+    if (isOpen) {
+      // This cleanup runs when the modal closes or the component unmounts.
+      return () => stopAudio();
     }
-    return () => stopAudio();
   }, [isOpen]);
 
   useEffect(() => {
@@ -204,6 +203,14 @@ export function SelectTrackModal({
       stopAudio();
     }
 
+    const rollbackAndShowError = (errorMessage: string) => {
+      setAddedTracks((prev) => new Set([...prev, trackId]));
+      setToast({
+        message: errorMessage,
+        type: "error",
+      });
+    };
+
     try {
       const res = await fetch(`/api/playlists/${playlistId}/tracks`, {
         method: "DELETE",
@@ -220,20 +227,12 @@ export function SelectTrackModal({
         });
       } else {
         // 失敗した場合はロールバック
-        setAddedTracks((prev) => new Set([...prev, trackId]));
-        setToast({
-          message: "削除に失敗しました",
-          type: "error",
-        });
+        rollbackAndShowError("削除に失敗しました");
       }
     } catch (err) {
       console.error("Error removing track:", err);
       // 失敗した場合はロールバック
-      setAddedTracks((prev) => new Set([...prev, trackId]));
-      setToast({
-        message: "エラーが発生しました",
-        type: "error",
-      });
+      rollbackAndShowError("エラーが発生しました");
     }
   };
 
@@ -284,10 +283,10 @@ export function SelectTrackModal({
                           : "bg-secondary/50 hover:bg-secondary active:scale-[0.98]"
                       }`}
                     >
-                      <div
-                        className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted cursor-pointer"
+                      <button
+                        type="button"
+                        className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted cursor-pointer border-0 p-0"
                         onClick={(e) => handlePreviewClick(e, track)}
-                        role="button"
                         aria-label={`プレビュー: ${track.track_name}`}
                       >
                         <Image
@@ -302,7 +301,7 @@ export function SelectTrackModal({
                             <Pause className="h-5 w-5 text-white fill-current" />
                           </div>
                         )}
-                      </div>
+                      </button>
                       <div className="flex-1 text-left min-w-0">
                         <p className="font-medium truncate text-foreground text-sm">
                           {track.track_name}
@@ -318,17 +317,17 @@ export function SelectTrackModal({
                             ? handleRemoveTrack(trackId)
                             : handleAddTrack(trackId)
                         }
-                        className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+                        className={`shrink-0 flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+                          isAlreadyInPlaylist
+                            ? "bg-green-500/20 hover:bg-green-500/30"
+                            : "bg-muted text-muted-foreground group-hover:bg-secondary-foreground/10 group-hover:text-foreground"
+                        }`}
                         aria-label={isAlreadyInPlaylist ? "削除" : "追加"}
                       >
                         {isAlreadyInPlaylist ? (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20 hover:bg-green-500/30">
-                            <Check className="h-5 w-5 text-green-600" />
-                          </div>
+                          <Check className="h-5 w-5 text-green-600" />
                         ) : (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground group-hover:bg-secondary-foreground/10 group-hover:text-foreground transition-colors">
-                            <Music className="h-4 w-4" />
-                          </div>
+                          <Music className="h-4 w-4" />
                         )}
                       </button>
                     </div>
