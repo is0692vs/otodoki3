@@ -96,9 +96,10 @@ export async function GET(request: NextRequest) {
 
         // RPC を呼び出してランダムなトラックを取得
         // get_random_tracks は DB 側で ORDER BY random() を行い、指定された ID を除外して返す
+        // excluded_track_ids は text[] なので String 配列に変換して渡す
         const { data: tracks, error } = await supabase.rpc('get_random_tracks', {
             limit_count: count,
-            excluded_track_ids: excludedTrackIds,
+            excluded_track_ids: excludedTrackIds.map(String),
         });
 
         if (error) {

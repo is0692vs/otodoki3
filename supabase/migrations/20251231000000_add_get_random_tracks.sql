@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS tsm_system_rows;
 -- Create the get_random_tracks function
 CREATE OR REPLACE FUNCTION get_random_tracks(
     limit_count int DEFAULT 10,
-    excluded_track_ids bigint[] DEFAULT NULL
+    excluded_track_ids text[] DEFAULT NULL
 )
 RETURNS TABLE (
     track_id text,
@@ -56,23 +56,22 @@ BEGIN
         -- Exclude tracks if exclusion list is provided and not empty
         (excluded_track_ids IS NULL 
          OR array_length(excluded_track_ids, 1) IS NULL 
-         OR tp.track_id::bigint <> ALL(excluded_track_ids))
+         OR tp.track_id <> ALL(excluded_track_ids))
     ORDER BY random()
     LIMIT validated_limit;
 END;
 $$ LANGUAGE plpgsql VOLATILE;
 
--- Set security policies
-REVOKE ALL ON FUNCTION get_random_tracks(int, bigint[]) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION get_random_tracks(int, bigint[]) TO service_role;
-GRANT EXECUTE ON FUNCTION get_random_tracks(int, bigint[]) TO authenticated;
-GRANT EXECUTE ON FUNCTION get_random_tracks(int, bigint[]) TO anon;
+-- Set security policies (service_role only for server-side API usage)
+REVOKE ALL ON FUNCTION get_random_tracks(int, text[]) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION get_random_tracks(int, text[]) TO service_role;
 
 -- Add comment for documentation
-COMMENT ON FUNCTION get_random_tracks(int, bigint[]) IS 
+COMMENT ON FUNCTION get_random_tracks(int, text[]) IS 
 'Fetches random tracks from track_pool with optional exclusion list. 
 Uses TABLESAMPLE for efficient random sampling at database level.
 Parameters:
   - limit_count: Number of tracks to return (1-100, default 10)
-  - excluded_track_ids: Array of track IDs to exclude (optional)
-Returns: Table of track records with all necessary fields for API response';
+  - excluded_track_ids: Array of track IDs (as text) to exclude (optional)
+Returns: Table of track records with all necessary fields for API response.
+Security: Only accessible via service_role for server-side API usage.';
