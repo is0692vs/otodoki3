@@ -13,11 +13,8 @@ BEGIN
   END IF;
 
   DELETE FROM public.track_pool
-  WHERE id IN (
-    SELECT id FROM public.track_pool
-    ORDER BY fetched_at ASC NULLS FIRST, created_at ASC NULLS FIRST
-    LIMIT to_delete
-  );
+  ORDER BY fetched_at ASC NULLS FIRST, created_at ASC NULLS FIRST
+  LIMIT to_delete;
 
   GET DIAGNOSTICS deleted_count := ROW_COUNT;
   RETURN;

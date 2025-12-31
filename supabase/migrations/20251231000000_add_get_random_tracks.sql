@@ -54,8 +54,7 @@ BEGIN
     TABLESAMPLE SYSTEM_ROWS(sample_size)
     WHERE 
         -- Exclude tracks if exclusion list is provided and not empty
-        (excluded_track_ids IS NULL 
-         OR array_length(excluded_track_ids, 1) IS NULL 
+        (COALESCE(array_length(excluded_track_ids, 1), 0) = 0
          OR tp.track_id <> ALL(excluded_track_ids))
     ORDER BY random()
     LIMIT validated_limit;

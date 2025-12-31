@@ -23,10 +23,12 @@ export type MockSupabaseClient = Partial<SupabaseClient<any, "public", any>> & {
     mockIs: ReturnType<typeof vi.fn>;
     mockOr: ReturnType<typeof vi.fn>;
     mockAnd: ReturnType<typeof vi.fn>;
+    mockRpc: ReturnType<typeof vi.fn>;
     auth: {
         getUser: ReturnType<typeof vi.fn>;
     };
     from: ReturnType<typeof vi.fn>;
+    rpc: ReturnType<typeof vi.fn>;
 };
 
 /**
@@ -53,6 +55,7 @@ export function createMockSupabaseClient(): MockSupabaseClient {
     const mockIs = vi.fn();
     const mockOr = vi.fn();
     const mockAnd = vi.fn();
+    const mockRpc = vi.fn();
 
     // クエリビルダー（await 可能なモック）を生成
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -135,6 +138,7 @@ export function createMockSupabaseClient(): MockSupabaseClient {
             getUser: vi.fn(),
         },
         from: fromMock,
+        rpc: mockRpc,
         // テストで結果を差し込むために公開
         mockSelect,
         mockInsert,
@@ -156,6 +160,7 @@ export function createMockSupabaseClient(): MockSupabaseClient {
         mockIs,
         mockOr,
         mockAnd,
+        mockRpc,
     };
 }
 

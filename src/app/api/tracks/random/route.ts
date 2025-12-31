@@ -64,19 +64,13 @@ export async function GET(request: NextRequest) {
             ]);
 
             if (dislikeError) {
-                console.error('Failed to fetch dislikes for filtering:', {
-                    error: dislikeError,
-                    userId: user.id,
-                });
+                console.error('Failed to fetch dislikes for filtering:', dislikeError.message);
             } else if (dislikes) {
                 excludedTrackIds.push(...dislikes.map(d => d.track_id));
             }
 
             if (likeError) {
-                console.error('Failed to fetch likes for filtering:', {
-                    error: likeError,
-                    userId: user.id,
-                });
+                console.error('Failed to fetch likes for filtering:', likeError.message);
             } else if (likes) {
                 excludedTrackIds.push(...likes.map(l => l.track_id));
             }
@@ -97,16 +91,14 @@ export async function GET(request: NextRequest) {
         // RPC を呼び出してランダムなトラックを取得
         // get_random_tracks は DB 側で ORDER BY random() を行い、指定された ID を除外して返す
         // excluded_track_ids は text[] なので String 配列に変換して渡す
+        // 空配列の場合は null を渡すことで SQL 側の分岐を簡潔にする
         const { data: tracks, error } = await supabase.rpc('get_random_tracks', {
             limit_count: count,
-            excluded_track_ids: excludedTrackIds.map(String),
+            excluded_track_ids: excludedTrackIds.length > 0 ? excludedTrackIds.map(String) : null,
         });
 
         if (error) {
-            console.error('Failed to fetch tracks from pool via RPC:', {
-                error,
-                userId: user?.id,
-            });
+            console.error('Failed to fetch tracks from pool via RPC:', error.message);
             return NextResponse.json(
                 { success: false, error: 'Failed to fetch tracks' },
                 { status: 500 }
