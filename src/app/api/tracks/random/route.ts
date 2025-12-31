@@ -1,20 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
-/**
- * 配列の要素をランダムな順序に並べ替えた新しい配列を作成する。
- *
- * @param array - 元の配列（破壊的変更は行わない）
- * @returns 引数 `array` の要素をランダムな順序に並べた新しい配列
- */
-function shuffleArray<T>(array: T[]): T[] {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-}
+export const dynamic = 'force-dynamic';
 
 // Constants for user activity filtering
 const DISLIKE_EXCLUDE_DAYS = 30;
@@ -107,25 +94,15 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // プールから取得（小さなバッファのみ - 除外IDはデータベースでフィルタ済み）
-        const fetchCount = count + 20;
-
-        // Note: Sorting by fetched_at is omitted for better performance.
-        // Results are shuffled client-side anyway, so DB-level sorting is unnecessary.
-        let query = supabase
-            .from('track_pool')
-            .select('*')
-            .limit(fetchCount);
-
-        // 除外リストがある場合はフィルタリング
-        if (excludedTrackIds.length > 0) {
-            query = query.not('track_id', 'in', `(${excludedTrackIds.join(',')})`);
-        }
-
-        const { data: tracks, error } = await query;
+        // RPC を呼び出してランダムなトラックを取得
+        // get_random_tracks は DB 側で ORDER BY random() を行い、指定された ID を除外して返す
+        const { data: tracks, error } = await supabase.rpc('get_random_tracks', {
+            limit_count: count,
+            excluded_track_ids: excludedTrackIds,
+        });
 
         if (error) {
-            console.error('Failed to fetch tracks from pool:', {
+            console.error('Failed to fetch tracks from pool via RPC:', {
                 error,
                 userId: user?.id,
             });
@@ -142,14 +119,17 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Shuffle and take requested count
-        const shuffled = shuffleArray(tracks);
-        const result = shuffled.slice(0, count);
-
-        return NextResponse.json({
-            success: true,
-            tracks: result,
-        });
+        return NextResponse.json(
+            {
+                success: true,
+                tracks: tracks,
+            },
+            {
+                headers: {
+                    'Cache-Control': 'no-store',
+                },
+            }
+        );
     } catch (err) {
         console.error('Unexpected error in /api/tracks/random:', err);
         return NextResponse.json(
