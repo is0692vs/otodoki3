@@ -293,6 +293,25 @@ export type Database = {
           deleted_count: number
         }[]
       }
+      get_random_tracks: {
+        Args: {
+          limit_count?: number
+          excluded_track_ids?: string[] | null
+        }
+        Returns: {
+          track_id: string
+          track_name: string
+          artist_name: string
+          collection_name: string
+          preview_url: string
+          artwork_url: string
+          track_view_url: string
+          genre: string
+          release_date: string
+          metadata: Json
+          fetched_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
