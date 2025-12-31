@@ -68,7 +68,9 @@ export function SelectTrackModal({
 
     audioRef.current = new Audio(track.preview_url);
     audioRef.current.onended = () => setPlayingId(null);
-    audioRef.current.play().catch((err) => console.error("Failed to play audio preview:", err));
+    audioRef.current
+      .play()
+      .catch((err) => console.error("Failed to play audio preview:", err));
     setPlayingId(track.track_id);
   };
 
