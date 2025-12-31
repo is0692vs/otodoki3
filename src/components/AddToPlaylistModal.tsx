@@ -136,15 +136,17 @@ export function AddToPlaylistModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-xl">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+        <div className="bg-card border border-border rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col shadow-xl">
           {/* ヘッダー */}
-          <div className="flex justify-between items-center p-6 border-b border-zinc-800">
-            <h2 className="text-xl font-bold">プレイリストを選択</h2>
+          <div className="flex justify-between items-center p-6 border-b border-border">
+            <h2 className="text-xl font-bold text-foreground">
+              プレイリストを選択
+            </h2>
             <button
               type="button"
               onClick={onClose}
-              className="text-zinc-400 hover:text-white transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors"
               aria-label="閉じる"
             >
               <X className="h-6 w-6" />
@@ -155,10 +157,10 @@ export function AddToPlaylistModal({
           <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               </div>
             ) : playlists.length === 0 ? (
-              <div className="text-center py-12 text-zinc-400">
+              <div className="text-center py-12 text-muted-foreground">
                 <Music className="h-12 w-12 mx-auto mb-4 opacity-20" />
                 <p className="text-sm">プレイリストがありません</p>
                 <p className="text-xs mt-2 opacity-60">
@@ -173,25 +175,27 @@ export function AddToPlaylistModal({
                     type="button"
                     onClick={() => handleAddToPlaylist(playlist.id)}
                     disabled={adding === playlist.id}
-                    className="group flex w-full items-center gap-4 p-4 bg-zinc-800/50 rounded-xl hover:bg-zinc-800 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed min-w-0"
+                    className="group flex w-full items-center gap-4 p-4 bg-secondary/50 rounded-xl hover:bg-secondary transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed min-w-0"
                   >
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-2xl">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-2xl">
                       {playlist.icon && playlist.icon !== "🎵" ? (
                         playlist.icon
                       ) : (
-                        <Music className="h-6 w-6 text-zinc-400" />
+                        <Music className="h-6 w-6 text-muted-foreground" />
                       )}
                     </div>
                     <div className="flex-1 text-left min-w-0">
-                      <p className="font-semibold truncate">{playlist.name}</p>
-                      <p className="text-sm text-zinc-400 truncate">
+                      <p className="font-semibold truncate text-foreground">
+                        {playlist.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">
                         {playlist.count} 曲
                       </p>
                     </div>
                     {adding === playlist.id ? (
-                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                     ) : (
-                      <ChevronRight className="h-5 w-5 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                      <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
                     )}
                   </button>
                 ))}

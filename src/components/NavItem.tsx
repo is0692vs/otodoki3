@@ -28,8 +28,8 @@ export function NavItem(props: Props) {
     "relative flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2 transition-all duration-200 active:scale-90 md:flex-row md:justify-start md:gap-3";
 
   const activeClasses = isActive
-    ? "text-blue-400 bg-white/5"
-    : "text-zinc-500 hover:text-zinc-300";
+    ? "text-primary bg-accent"
+    : "text-muted-foreground hover:text-foreground";
 
   const content = (
     <>
@@ -40,7 +40,7 @@ export function NavItem(props: Props) {
         {label}
       </span>
       {isActive && (
-        <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-blue-400 md:hidden" />
+        <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-primary md:hidden" />
       )}
     </>
   );

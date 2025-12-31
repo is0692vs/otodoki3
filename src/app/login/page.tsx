@@ -83,12 +83,12 @@ export default function LoginPage() {
       <div className="absolute top-[-10%] left-[-10%] w-[40%] aspect-square bg-blue-600/20 rounded-full blur-[120px] animate-pulse" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] aspect-square bg-purple-600/20 rounded-full blur-[120px] animate-pulse delay-700" />
 
-      <div className="glass relative max-w-md w-full space-y-8 bg-white/5 border border-white/10 p-10 rounded-[2.5rem] shadow-2xl backdrop-blur-2xl">
+      <div className="relative max-w-md w-full space-y-8 bg-card border border-border p-10 rounded-[2.5rem] shadow-2xl">
         <div className="text-center space-y-2">
-          <h1 className="bg-gradient-to-br from-white to-white/40 bg-clip-text text-5xl font-black tracking-tighter text-transparent">
+          <h1 className="text-5xl font-black tracking-tighter text-foreground">
             otodoki3
           </h1>
-          <p className="text-sm font-medium tracking-widest text-white/40 uppercase">
+          <p className="text-sm font-medium tracking-widest text-muted-foreground uppercase">
             {isSignUp ? "アカウント作成" : "おかえりなさい"}
           </p>
         </div>
@@ -98,7 +98,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white font-bold shadow-xl transition-all duration-300 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl border border-border bg-secondary text-secondary-foreground font-bold shadow-sm transition-all duration-300 hover:bg-accent hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -110,11 +110,11 @@ export default function LoginPage() {
           </button>
 
           <div className="relative flex items-center py-2">
-            <div className="flex-grow border-t border-white/10"></div>
-            <span className="flex-shrink mx-4 text-xs font-bold text-white/20 uppercase tracking-widest">
+            <div className="flex-grow border-t border-border"></div>
+            <span className="flex-shrink mx-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">
               または
             </span>
-            <div className="flex-grow border-t border-white/10"></div>
+            <div className="flex-grow border-t border-border"></div>
           </div>
 
           <form onSubmit={handleEmailLogin} className="space-y-4">
@@ -125,7 +125,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                className="w-full px-6 py-4 rounded-2xl border border-border bg-secondary text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
               <input
                 type="password"
@@ -133,18 +133,18 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                className="w-full px-6 py-4 rounded-2xl border border-border bg-secondary text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
             </div>
 
             {error && (
-              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium">
+              <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
                 {error}
               </div>
             )}
 
             {message && (
-              <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium">
+              <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-600 text-sm font-medium">
                 {message}
               </div>
             )}
@@ -152,13 +152,9 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 rounded-2xl bg-blue-600 text-white font-bold shadow-xl shadow-blue-600/20 transition-all duration-300 hover:bg-blue-500 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+              className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg transition-all duration-300 hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
             >
-              {loading
-                ? "処理中..."
-                : isSignUp
-                ? "アカウント作成"
-                : "ログイン"}
+              {loading ? "処理中..." : isSignUp ? "アカウント作成" : "ログイン"}
             </button>
           </form>
         </div>
@@ -171,13 +167,13 @@ export default function LoginPage() {
               setError(null);
               setMessage(null);
             }}
-            className="text-sm font-bold text-white/40 hover:text-white/60 transition-colors"
+            className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
           >
             {isSignUp
               ? "アカウントをお持ちですか？ ログイン"
               : "アカウントをお持ちでないですか？ 新規登録"}
           </button>
-          <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em]">
+          <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
             クローズドベータ • 招待ユーザーのみ
           </p>
         </div>
