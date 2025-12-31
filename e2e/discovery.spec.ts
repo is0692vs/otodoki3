@@ -16,8 +16,6 @@ async function skipTutorialIfPresent(page: import('@playwright/test').Page) {
         const likeButton = page.locator('button[aria-label="いいね"]');
         if ((await likeButton.count()) === 0) return;
         await likeButton.click();
-
-        }, { timeout: 5000 }).not.toContain('チュートリアル');
     }
 }
 
