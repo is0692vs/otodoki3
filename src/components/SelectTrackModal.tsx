@@ -22,6 +22,16 @@ interface SelectTrackModalProps {
   onSuccess?: (track?: Track) => void;
 }
 
+/**
+ * お気に入りから曲を選択して指定のプレイリストへ追加・削除できるモーダルを表示するコンポーネント。
+ *
+ * @param isOpen - モーダルの開閉状態（true で表示）
+ * @param onClose - モーダルを閉じるためのコールバック
+ * @param playlistId - 曲を追加・削除する対象のプレイリスト識別子
+ * @param existingTrackIds - 既にプレイリストに含まれる曲の ID 配列（既定値は空配列）
+ * @param onSuccess - 曲を追加した後に呼ばれるコールバック。追加した `Track` オブジェクトを受け取る
+ * @returns モーダルの UI を表す React 要素。`isOpen` が `false` の場合は `null` を返す
+ */
 export function SelectTrackModal({
   isOpen,
   onClose,
