@@ -55,15 +55,14 @@ BEGIN
     WHERE 
         -- Exclude tracks if exclusion list is provided and not empty
         (COALESCE(array_length(excluded_track_ids, 1), 0) = 0
-         OR tp.track_id <> ALL(excluded_track_ids))
+         OR tp.track_id::text <> ALL(excluded_track_ids))
     ORDER BY random()
     LIMIT validated_limit;
 END;
 $$ LANGUAGE plpgsql VOLATILE;
 
--- Set security policies (service_role only for server-side API usage)
-REVOKE ALL ON FUNCTION get_random_tracks(int, text[]) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION get_random_tracks(int, text[]) TO service_role;
+-- Set security policies (accessible by authenticated and anon roles)
+GRANT EXECUTE ON FUNCTION get_random_tracks(int, text[]) TO authenticated, anon;
 
 -- Add comment for documentation
 COMMENT ON FUNCTION get_random_tracks(int, text[]) IS 
@@ -73,4 +72,4 @@ Parameters:
   - limit_count: Number of tracks to return (1-100, default 10)
   - excluded_track_ids: Array of track IDs (as text) to exclude (optional)
 Returns: Table of track records with all necessary fields for API response.
-Security: Only accessible via service_role for server-side API usage.';
+Security: Accessible by authenticated and anon roles.';

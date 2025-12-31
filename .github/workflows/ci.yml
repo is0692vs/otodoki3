@@ -175,6 +175,32 @@ jobs:
           NPM_CONFIG_IGNORE_SCRIPTS: "true"
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Apply E2E seed data to track_pool
+        run: |
+          # Supabaseテスト環境に接続
+          SUPABASE_PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF_TEST }}"
+          SUPABASE_DB_PASSWORD="${{ secrets.SUPABASE_DB_PASSWORD_TEST }}"
+          
+          # DB接続情報を構築
+          DB_HOST="db.${SUPABASE_PROJECT_REF}.supabase.co"
+          DB_PORT="5432"
+          DB_NAME="postgres"
+          DB_USER="postgres"
+          
+          # PostgreSQL経由でseed SQLを実行
+          PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
+            "postgresql://${DB_USER}:${SUPABASE_DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}" \
+            -f supabase/seeds/e2e_track_pool_seed.sql
+          
+          # 投入確認: track_poolのレコード数を表示
+          echo "Checking track_pool count..."
+          PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
+            "postgresql://${DB_USER}:${SUPABASE_DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}" \
+            -c "SELECT COUNT(*) AS track_pool_count FROM public.track_pool;"
       - name: Run discovery E2E tests
         run: npx playwright test e2e/discovery.spec.ts
         env:
