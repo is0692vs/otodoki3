@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { X, Music, Check } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, Music, Check, Pause } from "lucide-react";
 import Image from "next/image";
 import { Toast } from "./Toast";
 
@@ -36,6 +36,50 @@ export function SelectTrackModal({
     message: string;
     type: "success" | "error";
   } | null>(null);
+
+  // 音声プレビュー再生用
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playingId, setPlayingId] = useState<number | null>(null);
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.onended = null;
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setPlayingId(null);
+  };
+
+  const handlePreviewClick = (e: React.MouseEvent, track: Track) => {
+    e.stopPropagation();
+    // 同じ曲なら停止
+    if (playingId === track.track_id) {
+      stopAudio();
+      return;
+    }
+
+    // 以前の音声を停止
+    if (audioRef.current) {
+      audioRef.current.onended = null;
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    if (!track.preview_url) return;
+
+    audioRef.current = new Audio(track.preview_url);
+    audioRef.current.onended = () => setPlayingId(null);
+    audioRef.current.play().catch(() => {});
+    setPlayingId(track.track_id);
+  };
+
+  // モーダルが閉じられた or コンポーネントがアンマウントされたときは音声を停止
+  useEffect(() => {
+    if (!isOpen) {
+      stopAudio();
+    }
+    return () => stopAudio();
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -85,6 +129,9 @@ export function SelectTrackModal({
     if (addedTracks.has(trackId)) {
       return;
     }
+
+    // 追加時はプレビューを停止して重複再生を防止
+    stopAudio();
 
     // 楽観的更新：即座に反映
     setAddedTracks((prev) => new Set([...prev, trackId]));
@@ -140,6 +187,56 @@ export function SelectTrackModal({
     }
   };
 
+  const handleRemoveTrack = async (trackId: number) => {
+    if (!addedTracks.has(trackId)) {
+      return;
+    }
+
+    // 楽観的更新：即座に削除を反映
+    setAddedTracks((prev) => {
+      const next = new Set(prev);
+      next.delete(trackId);
+      return next;
+    });
+
+    // 再生中なら停止
+    if (playingId === trackId) {
+      stopAudio();
+    }
+
+    try {
+      const res = await fetch(`/api/playlists/${playlistId}/tracks`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ track_id: trackId }),
+      });
+
+      if (res.ok) {
+        setToast({
+          message: "曲を削除しました",
+          type: "success",
+        });
+      } else {
+        // 失敗した場合はロールバック
+        setAddedTracks((prev) => new Set([...prev, trackId]));
+        setToast({
+          message: "削除に失敗しました",
+          type: "error",
+        });
+      }
+    } catch (err) {
+      console.error("Error removing track:", err);
+      // 失敗した場合はロールバック
+      setAddedTracks((prev) => new Set([...prev, trackId]));
+      setToast({
+        message: "エラーが発生しました",
+        type: "error",
+      });
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -179,20 +276,20 @@ export function SelectTrackModal({
                   const isAlreadyInPlaylist = addedTracks.has(trackId);
 
                   return (
-                    <button
+                    <div
                       key={track.track_id}
-                      type="button"
-                      onClick={() =>
-                        !isAlreadyInPlaylist && handleAddTrack(trackId)
-                      }
-                      disabled={isAlreadyInPlaylist}
                       className={`group flex w-full items-center gap-3 p-3 rounded-xl transition-all min-w-0 ${
                         isAlreadyInPlaylist
-                          ? "bg-green-500/10 cursor-default"
+                          ? "bg-green-500/10"
                           : "bg-secondary/50 hover:bg-secondary active:scale-[0.98]"
                       }`}
                     >
-                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+                      <div
+                        className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted cursor-pointer"
+                        onClick={(e) => handlePreviewClick(e, track)}
+                        role="button"
+                        aria-label={`プレビュー: ${track.track_name}`}
+                      >
                         <Image
                           src={track.artwork_url}
                           alt={track.track_name}
@@ -200,6 +297,11 @@ export function SelectTrackModal({
                           className="object-cover"
                           unoptimized
                         />
+                        {playingId === trackId && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                            <Pause className="h-5 w-5 text-white fill-current" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1 text-left min-w-0">
                         <p className="font-medium truncate text-foreground text-sm">
@@ -209,9 +311,18 @@ export function SelectTrackModal({
                           {track.artist_name}
                         </p>
                       </div>
-                      <div className="shrink-0">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          isAlreadyInPlaylist
+                            ? handleRemoveTrack(trackId)
+                            : handleAddTrack(trackId)
+                        }
+                        className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+                        aria-label={isAlreadyInPlaylist ? "削除" : "追加"}
+                      >
                         {isAlreadyInPlaylist ? (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20 hover:bg-green-500/30">
                             <Check className="h-5 w-5 text-green-600" />
                           </div>
                         ) : (
@@ -219,8 +330,8 @@ export function SelectTrackModal({
                             <Music className="h-4 w-4" />
                           </div>
                         )}
-                      </div>
-                    </button>
+                      </button>
+                    </div>
                   );
                 })}
               </div>
