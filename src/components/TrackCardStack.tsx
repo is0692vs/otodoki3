@@ -2,6 +2,7 @@
 
 import { AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Heart, X, Music, Sparkles } from "lucide-react";
 
 import type { Track, CardItem } from "../types/track-pool";
@@ -144,6 +145,7 @@ export function TrackCardStack({
   );
 
   // Toast helper
+  const queryClient = useQueryClient();
   const toast = useToast();
   const [actionInProgress, setActionInProgress] = useState(false);
 
@@ -252,6 +254,9 @@ export function TrackCardStack({
             5000,
             300
           );
+
+          // Like 成功後、ライブラリ側のカウント等を更新
+          queryClient.invalidateQueries({ queryKey: ["playlists"] });
         } catch (err) {
           console.error("Failed to save like after retries", {
             track_id: id,
@@ -287,6 +292,9 @@ export function TrackCardStack({
             300
           );
           toast.dismiss(pending);
+
+          // Dislike 成功後、ライブラリ側のカウント等を更新
+          queryClient.invalidateQueries({ queryKey: ["playlists"] });
           // toast.push({ type: "success", message: "スキップを保存しました" }); // 通知を削除
         } catch (err) {
           console.error("Failed to save dislike after retries", {

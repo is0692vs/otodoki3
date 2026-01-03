@@ -1,10 +1,12 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Heart, Ban, ChevronRight, Plus, Music, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Layout } from "@/components/Layout";
+import { usePlaylists } from "@/hooks/usePlaylists";
 
 type Playlist = {
   id: string;
@@ -28,37 +30,30 @@ const PlaylistIcon = ({ id, icon }: { id: string; icon?: string }) => {
   }
 };
 
+/**
+ * ユーザーのプレイリスト一覧を表示し、新規プレイリストの作成を行うページコンポーネント。
+ *
+ * ページはプレイリストの読み込み・更新状態を表示し、一覧の各項目から個別プレイリストへ遷移できるUIを提供します。
+ * 認証エラー（HTTP 401 / 403）が発生した場合はログインページへリダイレクトします。
+ * モーダルでの新規作成はタイトルを送信してサーバーへPOSTし、成功時にプレイリストのキャッシュを無効化して一覧を更新します。
+ * モーダルが開いている間は Escape キーでモーダルを閉じることができます。
+ *
+ * @returns このページのレンダリング結果となる JSX 要素
+ */
 export default function PlaylistsPage() {
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newPlaylistTitle, setNewPlaylistTitle] = useState("");
   const [creating, setCreating] = useState(false);
   const router = useRouter();
-
-  const fetchPlaylists = useCallback(async () => {
-    try {
-      const res = await fetch("/api/playlists");
-      if (res.status === 401 || res.status === 403) {
-        router.push("/login");
-        return;
-      }
-      if (!res.ok) {
-        console.error("Fetch error:", res.status);
-        return;
-      }
-      const { playlists } = await res.json();
-      setPlaylists(playlists);
-    } catch (err) {
-      console.error("Network error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
+  const queryClient = useQueryClient();
+  const { data: playlists = [], isLoading, isFetching, error } = usePlaylists();
 
   useEffect(() => {
-    fetchPlaylists();
-  }, [fetchPlaylists]);
+    const status = (error as { status?: number } | null)?.status;
+    if (status === 401 || status === 403) {
+      router.push("/login");
+    }
+  }, [error, router]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -87,7 +82,8 @@ export default function PlaylistsPage() {
       if (res.ok) {
         setNewPlaylistTitle("");
         setIsModalOpen(false);
-        fetchPlaylists();
+        // キャッシュを無効化してリストを最新化
+        queryClient.invalidateQueries({ queryKey: ["playlists"] });
       } else {
         console.error("Failed to create playlist");
       }
@@ -98,7 +94,8 @@ export default function PlaylistsPage() {
     }
   };
 
-  if (loading)
+  // 初回ロード時のみローディング表示
+  if (isLoading)
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
@@ -106,6 +103,16 @@ export default function PlaylistsPage() {
         </div>
       </Layout>
     );
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[calc(100vh-5rem)] text-sm text-muted-foreground">
+          プレイリストの取得に失敗しました
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -126,6 +133,11 @@ export default function PlaylistsPage() {
             <Plus className="h-6 w-6" />
           </button>
         </header>
+
+        {/* キャッシュがある場合は即座に表示し、更新はバックグラウンドで */}
+        {isFetching && playlists.length > 0 && (
+          <div className="mb-3 text-xs text-muted-foreground">更新中...</div>
+        )}
 
         <div className="grid gap-4">
           {playlists.map((pl) => (

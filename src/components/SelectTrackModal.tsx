@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { X, Music, Check, Pause } from "lucide-react";
 import Image from "next/image";
 import { Toast } from "./Toast";
@@ -39,6 +40,7 @@ export function SelectTrackModal({
   existingTrackIds = [],
   onSuccess,
 }: SelectTrackModalProps) {
+  const queryClient = useQueryClient();
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(false);
   const [addedTracks, setAddedTracks] = useState<Set<number>>(new Set());
@@ -166,6 +168,10 @@ export function SelectTrackModal({
           message: "曲を追加しました",
           type: "success",
         });
+
+        // キャッシュを無効化してライブラリ/詳細のカウントや内容を更新
+        queryClient.invalidateQueries({ queryKey: ["playlists"] });
+        queryClient.invalidateQueries({ queryKey: ["playlist", playlistId] });
       } else if (res.status === 409) {
         setToast({
           message: "既にこのプレイリストに追加されています",
@@ -237,6 +243,10 @@ export function SelectTrackModal({
           message: "曲を削除しました",
           type: "success",
         });
+
+        // キャッシュを無効化してライブラリ/詳細のカウントや内容を更新
+        queryClient.invalidateQueries({ queryKey: ["playlists"] });
+        queryClient.invalidateQueries({ queryKey: ["playlist", playlistId] });
       } else {
         // 失敗した場合はロールバック
         rollbackAndShowError("削除に失敗しました");
