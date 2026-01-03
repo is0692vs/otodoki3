@@ -20,6 +20,15 @@ interface AddToPlaylistModalProps {
   onSuccess?: () => void;
 }
 
+/**
+ * トラックを既存のユーザー作成プレイリストに追加するための選択モーダルを表示するコンポーネント。
+ *
+ * @param isOpen - モーダルが表示されているかどうか
+ * @param onClose - モーダルを閉じるためのコールバック
+ * @param trackId - 追加対象のトラックの識別子
+ * @param onSuccess - トラックの追加に成功した後に呼ばれるオプショナルなコールバック
+ * @returns モーダルの JSX 要素。`isOpen` が false の場合は `null` を返す。
+ */
 export function AddToPlaylistModal({
   isOpen,
   onClose,

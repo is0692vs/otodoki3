@@ -30,6 +30,16 @@ const PlaylistIcon = ({ id, icon }: { id: string; icon?: string }) => {
   }
 };
 
+/**
+ * ユーザーのプレイリスト一覧を表示し、新規プレイリストの作成を行うページコンポーネント。
+ *
+ * ページはプレイリストの読み込み・更新状態を表示し、一覧の各項目から個別プレイリストへ遷移できるUIを提供します。
+ * 認証エラー（HTTP 401 / 403）が発生した場合はログインページへリダイレクトします。
+ * モーダルでの新規作成はタイトルを送信してサーバーへPOSTし、成功時にプレイリストのキャッシュを無効化して一覧を更新します。
+ * モーダルが開いている間は Escape キーでモーダルを閉じることができます。
+ *
+ * @returns このページのレンダリング結果となる JSX 要素
+ */
 export default function PlaylistsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newPlaylistTitle, setNewPlaylistTitle] = useState("");
