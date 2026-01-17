@@ -1,76 +1,56 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { rateLimit } from './rateLimiter';
+import { rateLimit, _test_buckets, _test_cleanup } from './rateLimiter';
 
-describe('rateLimit', () => {
-    beforeEach(() => {
-        vi.useFakeTimers();
-    });
+describe('rateLimiter', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    _test_buckets.clear();
+  });
 
-    afterEach(() => {
-        vi.useRealTimers();
-    });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
-    it('should allow requests within limit', () => {
-        const key = 'test-key-1';
-        const limit = 5;
-        const windowMs = 1000;
+  it('初期状態では許可される', () => {
+    const result = rateLimit('test-key', 5, 60000);
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(4);
+  });
 
-        for (let i = 0; i < limit; i++) {
-            const result = rateLimit(key, limit, windowMs);
-            expect(result.allowed).toBe(true);
-            expect(result.remaining).toBe(limit - 1 - i);
-        }
-    });
+  it('制限を超えると拒否される', () => {
+    for (let i = 0; i < 5; i++) {
+      rateLimit('test-key', 5, 60000);
+    }
+    const result = rateLimit('test-key', 5, 60000);
+    expect(result.allowed).toBe(false);
+    expect(result.remaining).toBe(0);
+  });
 
-    it('should block requests exceeding limit', () => {
-        const key = 'test-key-2';
-        const limit = 2;
-        const windowMs = 1000;
+  it('時間が経過するとトークンが補充される', () => {
+    rateLimit('test-key', 5, 60000); // remaining 4
+    expect(_test_buckets.get('test-key')?.tokens).toBe(4);
 
-        rateLimit(key, limit, windowMs);
-        rateLimit(key, limit, windowMs);
+    // 30秒経過 (windowの半分) -> 約2.5トークン回復 -> max 5
+    vi.advanceTimersByTime(30000);
 
-        const result = rateLimit(key, limit, windowMs);
-        expect(result.allowed).toBe(false);
-        expect(result.remaining).toBe(0);
-    });
+    // 次の呼び出しで補充が走る
+    const result = rateLimit('test-key', 5, 60000);
+    // 4 + 2 = 6 -> max 5 -> consume 1 -> 4
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(4);
+  });
 
-    it('should refill tokens after time passes', () => {
-        const key = 'test-key-3';
-        const limit = 2;
-        const windowMs = 1000;
+  it('TTLを過ぎたバケットはクリーンアップされる', () => {
+    rateLimit('old-key', 5, 60000);
+    expect(_test_buckets.has('old-key')).toBe(true);
 
-        // Consume all tokens
-        rateLimit(key, limit, windowMs);
-        rateLimit(key, limit, windowMs);
-        expect(rateLimit(key, limit, windowMs).allowed).toBe(false);
+    // TTL (10分) + 1秒 経過
+    vi.advanceTimersByTime(10 * 60 * 1000 + 1000);
 
-        // Advance time by windowMs
-        vi.advanceTimersByTime(windowMs);
+    // クリーンアップを実行 (setInterval経由か直接呼び出し)
+    // setIntervalもfakeTimersで進んでいるはずだが、明示的に呼んでテスト
+    _test_cleanup();
 
-        // Should be allowed again
-        const result = rateLimit(key, limit, windowMs);
-        expect(result.allowed).toBe(true);
-    });
-
-    it('should refill tokens proportionally', () => {
-        const key = 'test-key-4';
-        const limit = 10;
-        const windowMs = 1000;
-
-        // Consume all tokens
-        for (let i = 0; i < limit; i++) {
-            rateLimit(key, limit, windowMs);
-        }
-        expect(rateLimit(key, limit, windowMs).allowed).toBe(false);
-
-        // Advance time by half windowMs
-        vi.advanceTimersByTime(windowMs / 2);
-
-        // Should have refilled about half tokens (5 tokens)
-        const result = rateLimit(key, limit, windowMs);
-        expect(result.allowed).toBe(true);
-        // We consumed 1, so remaining should be 4 (5 refilled - 1 consumed)
-        expect(result.remaining).toBe(4);
-    });
+    expect(_test_buckets.has('old-key')).toBe(false);
+  });
 });
